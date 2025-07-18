@@ -9,7 +9,9 @@ import ChatPage from "../pages/ChatPage";
 import MyApplicationsPage from "../pages/MyApplicationsPage";
 import DashboardPage from "../pages/DashboardPage";
 import DateOutagesPage from "../pages/DateOutagesPage";
+import OutageDetailsPage from "../pages/OutageDetailsPage";
 import MyProfilePage from "../pages/MyProfilePage";
+import NewOutageRequestPage from "../pages/NewOutageRequestPage"
 
 function LayoutWithNavbar({ children }: { children: React.ReactNode }) {
   return (
@@ -39,6 +41,8 @@ export function AppRoutes() {
         <Route path="/requests" element={<LayoutWithNavbar><OutageRequestsPage /></LayoutWithNavbar>} />
         <Route path="/chat" element={<LayoutWithNavbar><ChatPage /></LayoutWithNavbar>} />
         <Route path="/applications" element={<LayoutWithNavbar><MyApplicationsPage /></LayoutWithNavbar>} />
+        <Route path="/outages/:id" element={<LayoutWithNavbar><OutageDetailsPage /></LayoutWithNavbar>} />
+        <Route path="/outages/new" element={<LayoutWithNavbar><NewOutageRequestPage /></LayoutWithNavbar>} />
 
         {/* Fallback para rotas não encontradas */}
         <Route path="*" element={<LayoutWithNavbar><Navigate to="/calendar" replace /></LayoutWithNavbar>} />
