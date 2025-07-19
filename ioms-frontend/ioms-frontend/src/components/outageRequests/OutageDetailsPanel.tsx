@@ -1,6 +1,6 @@
 // src/components/outageRequests/OutageDetailsPanel.tsx
 import type { Outage } from '../../types/outage';
-import { outageDetailsMock } from '../../mocks/outageMocks';
+import { outageDetailsMock } from '../../mocks/dataMocks';
 import CriticalityBadge from './CriticalityBadge';
 import ApprovalActions from './ApprovalActions';
 
@@ -38,7 +38,7 @@ export default function OutageDetailsPanel({ outageId, userRole }: OutageDetails
           {outage.title || outage.application} {/* Mostra título ou fallback */}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          ID: {outage.id} • {outage.environment} environment
+          ID: {outage.id} • {outage.environment.join(', ')} environment(s)
         </p>
       </div>
 
@@ -67,8 +67,8 @@ export default function OutageDetailsPanel({ outageId, userRole }: OutageDetails
         />
         
         <DetailItem 
-          label="Environment" 
-          value={outage.environment} 
+          label="Environment(s)" 
+          value={outage.environment.join(', ')} 
         />
         
         <DetailItem 

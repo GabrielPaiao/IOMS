@@ -1,7 +1,7 @@
 // src/pages/OutageRequestsPage.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authMock, outageDetailsMock } from '../mocks/outageMocks';
+import { authMock, outageDetailsMock } from '../mocks/dataMocks';
 import OutageList from '../components/outageRequests/OutageList';
 import OutageDetailsPanel from '../components/outageRequests/OutageDetailsPanel';
 import FilterControls from '../components/outageRequests/FilterControls';
@@ -11,7 +11,7 @@ export default function OutageRequestsPage() {
   const navigate = useNavigate();
   const [currentUserType, setCurrentUserType] = useState<'dev' | 'key_user' | 'admin'>('key_user');
   
-  // Get user based on selection - using correct key names
+  // Get user based on selection
   const user = 
     currentUserType === 'key_user' ? authMock.key_user :
     currentUserType === 'dev' ? authMock.dev :
@@ -22,10 +22,8 @@ export default function OutageRequestsPage() {
     status?: Outage['status'];
     criticality?: Outage['criticality'];
     location?: string;
+    environment?: string;
   }>({});
-
-  // Default filters based on role
-  const defaultFilters = {};
 
   // Apply default filters on initial load
   useEffect(() => {
@@ -47,6 +45,7 @@ export default function OutageRequestsPage() {
     if (filter.status && outage.status !== filter.status) return false;
     if (filter.criticality && outage.criticality !== filter.criticality) return false;
     if (filter.location && outage.location !== filter.location) return false;
+    if (filter.environment && !outage.environment.includes(filter.environment)) return false;
     return true;
   };
 
@@ -58,6 +57,7 @@ export default function OutageRequestsPage() {
     if (filters.status && outage.status !== filters.status) return false;
     if (filters.criticality && outage.criticality !== filters.criticality) return false;
     if (filters.location && outage.location !== filters.location) return false;
+    if (filters.environment && !outage.environment.includes(filters.environment)) return false;
     
     // Check user permissions
     if (user.role === 'key_user' && !user.locations.includes(outage.location)) return false;
@@ -84,7 +84,7 @@ export default function OutageRequestsPage() {
             <option value="admin">Admin</option>
           </select>
           <div className="mt-2 text-xs text-gray-500">
-            Current: {user.role} {user.locations && `(${user.locations.join(', ')})`}
+            Current: {user.role} ({user.locations.join(', ')})
           </div>
         </div>
       )}
@@ -93,7 +93,7 @@ export default function OutageRequestsPage() {
         <div className="flex justify-between items-center mb-2">
           <h1 className="text-xl font-semibold text-gray-800">
             Outage Management
-            {user.role === 'key_user' && user.locations?.length === 1 && (
+            {user.role === 'key_user' && user.locations.length === 1 && (
               <span className="ml-2 text-sm font-normal text-gray-500">
                 ({user.locations[0]})
               </span>
@@ -117,7 +117,7 @@ export default function OutageRequestsPage() {
         <FilterControls 
           userRole={user.role}
           userLocations={user.locations}
-          defaultFilters={defaultFilters}
+          defaultFilters={filters}
           onFilterChange={handleFilterChange}
         />
       </div>
@@ -152,6 +152,7 @@ export default function OutageRequestsPage() {
                   ? `Showing only ${filters.status} outages` 
                   : 'Showing all outages'}
                 {filters.location && ` for ${filters.location}`}
+                {filters.environment && ` in ${filters.environment}`}
               </p>
               <button 
                 onClick={() => setFilters({})}

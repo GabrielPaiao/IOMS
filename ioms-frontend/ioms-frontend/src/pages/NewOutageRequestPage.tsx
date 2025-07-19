@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CriticalityBadge from '../components/outageRequests/CriticalityBadge';
 import type { CriticalityLevel } from '../types/outage';
-import { applicationsEnvironmentsMock } from '../mocks/outageMocks';
+import { applicationsEnvironmentsMock } from '../mocks/dataMocks';
 
 const CRITICALITY_LEVELS: CriticalityLevel[] = ['1 (highest)', '2', '3', '4', '5 (lowest)'];
 

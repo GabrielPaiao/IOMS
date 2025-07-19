@@ -1,6 +1,6 @@
 // src/components/outageRequests/ApprovalActions.tsx
 import { useNavigate } from 'react-router-dom';
-import { outageDetailsMock } from '../../mocks/outageMocks';
+import { outageDetailsMock } from '../../mocks/dataMocks';
 import type { Outage } from '../../types/outage';
 
 interface ApprovalActionsProps {

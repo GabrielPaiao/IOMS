@@ -5,8 +5,8 @@ import CriticalityBadge from './CriticalityBadge';
 interface OutageListProps {
   onSelectOutage: (id: string) => void;
   selectedId: string | null;
-  outages: Outage[]; // Recebe a lista já filtrada
-  showLocation?: boolean; // Novo prop para controlar exibição de localização
+  outages: Outage[];
+  showLocation?: boolean;
 }
 
 export default function OutageList({ 
@@ -61,7 +61,11 @@ export default function OutageList({
                 <div className="flex gap-2 text-sm text-gray-600">
                   <span>{outage.location}</span>
                   <span>•</span>
-                  <span>{outage.environment}</span>
+                  <span>
+                    {Array.isArray(outage.environment) 
+                      ? outage.environment.join(', ') 
+                      : outage.environment}
+                  </span>
                 </div>
               )}
               

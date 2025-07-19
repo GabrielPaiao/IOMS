@@ -1,23 +1,25 @@
 // src/components/outageRequests/FilterControls.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Outage } from '../../types/outage';
+import { outageDetailsMock } from '../../mocks/dataMocks';
 
 interface FilterControlsProps {
   userRole?: 'dev' | 'key_user' | 'admin';
-  userLocations?: string[]; // Novo prop para os sites do usuário
+  userLocations?: string[];
   defaultFilters: {
     status?: Outage['status'];
     criticality?: Outage['criticality'];
     location?: string;
+    environment?: string;
   };
   onFilterChange: (filters: {
     status?: Outage['status'];
     criticality?: Outage['criticality'];
     location?: string;
+    environment?: string;
   }) => void;
 }
 
-// Lista completa de sites disponíveis
 const ALL_SITES = [
   { code: 'GUA', name: 'Guararema' },
   { code: 'SJC', name: 'São José dos Campos' },
@@ -30,19 +32,27 @@ export default function FilterControls({
   defaultFilters,
   onFilterChange 
 }: FilterControlsProps) {
-  const [localFilters, setLocalFilters] = useState({
-    status: defaultFilters.status,
-    criticality: defaultFilters.criticality,
-    location: defaultFilters.location
-  });
+  const [localFilters, setLocalFilters] = useState(defaultFilters);
 
-  // Filtra sites disponíveis baseado na role e nas locations do usuário
+  // Atualiza os filtros locais quando os defaultFilters mudam
+  useEffect(() => {
+    setLocalFilters(defaultFilters);
+  }, [defaultFilters]);
+
   const availableSites = userRole === 'admin' 
     ? ALL_SITES 
     : ALL_SITES.filter(site => userLocations.includes(site.code));
 
-  const handleFilterChange = (key: string, value: string | undefined) => {
-    const newFilters = { ...localFilters, [key]: value };
+  // Obtém environments únicos das outages visíveis
+  const allEnvironments = Array.from(
+    new Set(outageDetailsMock.flatMap(o => o.environment))
+  ).sort();
+
+  const handleFilterChange = (key: keyof typeof localFilters, value: string | undefined) => {
+    const newFilters = { 
+      ...localFilters, 
+      [key]: value || undefined // Garante que valores vazios sejam undefined
+    };
     setLocalFilters(newFilters);
     onFilterChange(newFilters);
   };
@@ -50,7 +60,7 @@ export default function FilterControls({
   return (
     <div className="flex flex-wrap items-center gap-4">
       {/* Status filter */}
-      <div>
+      <div className="min-w-[180px]">
         <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-1">
           Status
         </label>
@@ -68,14 +78,14 @@ export default function FilterControls({
       </div>
 
       {/* Criticality filter */}
-      <div>
+      <div className="min-w-[180px]">
         <label htmlFor="criticality-filter" className="block text-sm font-medium text-gray-700 mb-1">
           Criticality
         </label>
         <select
           id="criticality-filter"
           value={localFilters.criticality || ''}
-          onChange={(e) => handleFilterChange('criticality', e.target.value as Outage['criticality'] || undefined)}
+          onChange={(e) => handleFilterChange('criticality', e.target.value || undefined)}
           className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
         >
           <option value="">All Levels</option>
@@ -87,9 +97,9 @@ export default function FilterControls({
         </select>
       </div>
 
-      {/* Location filter - agora disponível para todos com sites múltiplos */}
-      {availableSites.length > 1 && (
-        <div>
+      {/* Location filter */}
+      {availableSites.length > 0 && (
+        <div className="min-w-[180px]">
           <label htmlFor="location-filter" className="block text-sm font-medium text-gray-700 mb-1">
             Location
           </label>
@@ -103,6 +113,28 @@ export default function FilterControls({
             {availableSites.map(site => (
               <option key={site.code} value={site.code}>
                 {site.name} ({site.code})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Environment filter */}
+      {allEnvironments.length > 0 && (
+        <div className="min-w-[180px]">
+          <label htmlFor="environment-filter" className="block text-sm font-medium text-gray-700 mb-1">
+            Environment
+          </label>
+          <select
+            id="environment-filter"
+            value={localFilters.environment || ''}
+            onChange={(e) => handleFilterChange('environment', e.target.value || undefined)}
+            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+          >
+            <option value="">All Environments</option>
+            {allEnvironments.map(env => (
+              <option key={env} value={env}>
+                {env}
               </option>
             ))}
           </select>
