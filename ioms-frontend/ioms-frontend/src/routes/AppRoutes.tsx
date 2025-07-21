@@ -11,10 +11,11 @@ import DashboardPage from "../pages/DashboardPage";
 import DateOutagesPage from "../pages/DateOutagesPage";
 import OutageDetailsPage from "../pages/OutageDetailsPage";
 import MyProfilePage from "../pages/MyProfilePage";
-import NewOutageRequestPage from "../pages/NewOutageRequestPage"
-import ApplicationDetailsPage from "../pages/ApplicationDetailsPage"
-import EditSectionPage from "../pages/EditSectionPage"
+import NewOutageRequestPage from "../pages/NewOutageRequestPage";
+import ApplicationDetailsPage from "../pages/ApplicationDetailsPage";
+import EditSectionPage from "../pages/EditSectionPage";
 import InviteUserPage from "../pages/InviteUserPage";
+import RegisterPage from "../pages/RegisterPage";
 
 function LayoutWithNavbar({ children }: { children: React.ReactNode }) {
   return (
@@ -36,7 +37,7 @@ export function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
 
         {/* Rotas privadas (com navbar) */}
-        <Route path="/" element={<LayoutWithNavbar><Navigate to="/calendar" replace /></LayoutWithNavbar>} />
+        <Route path="/" element={<LayoutWithNavbar><Navigate to="/login" replace /></LayoutWithNavbar>} />
         <Route path="/calendar" element={<LayoutWithNavbar><OutageCalendarPage /></LayoutWithNavbar>} />
         <Route path="/dashboard" element={<LayoutWithNavbar><DashboardPage /></LayoutWithNavbar>} />
         <Route path="/date/:date" element={<LayoutWithNavbar><DateOutagesPage /></LayoutWithNavbar>} />
@@ -49,6 +50,7 @@ export function AppRoutes() {
         <Route path="/applications" element={<MyApplicationsPage />} />
         <Route path="/applications/:id" element={<ApplicationDetailsPage />} />
         <Route path="/applications/:id/edit/:mode" element={<EditSectionPage />} />
+        <Route path="/register" element={<RegisterPage/>}></Route>
         <Route path="/invite-user" element={<InviteUserPage />} />
 
         {/* Fallback para rotas não encontradas */}
