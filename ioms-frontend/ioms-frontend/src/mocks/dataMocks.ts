@@ -160,3 +160,120 @@ function createOutageMock(params: {
     approvedAt: params.status === 'approved' ? new Date().toISOString() : undefined
   };
 }
+
+export type TrendDirection = 'up' | 'down' | 'stable';
+
+export interface DashboardStats {
+  outages: {
+    approved: number;
+    rejected: number;
+    scheduled: number;
+    byCriticality: Record<CriticalityLevel, number>;
+  };
+  timing: {
+    outageDuration: {
+      average: string;
+      min: string;
+      max: string;
+      trend: TrendDirection;
+    };
+    responseTime: {
+      average: string;
+      min: string;
+      max: string;
+      trend: TrendDirection;
+    };
+  };
+  approvalMetrics: {
+    rate: number;
+    trend: TrendDirection;
+    byApprover: Array<{
+      name: string;
+      count: number;
+    }>;
+  };
+  topPerformers: {
+    requesters: Array<{
+      name: string;
+      count: number;
+    }>;
+    sites: Array<{
+      name: string;
+      count: number;
+    }>;
+    environments: Array<{
+      name: string;
+      count: number;
+    }>;
+  };
+}
+
+export const dashboardStats: DashboardStats = {
+  outages: {
+    approved: 24,
+    rejected: 8,
+    scheduled: 15,
+    byCriticality: {
+      '1 (highest)': 12,
+      '2': 18,
+      '3': 10,
+      '4': 7,
+      '5 (lowest)': 3 
+    }
+  },
+  timing: {
+    outageDuration: {
+      average: '2h 15m',
+      min: '30m',
+      max: '8h',
+      trend: 'down'
+    },
+    responseTime: {
+      average: '45m',
+      min: '5m',
+      max: '3h',
+      trend: 'up'
+    }
+  },
+  approvalMetrics: {
+    rate: 75,
+    trend: 'up',
+    byApprover: [
+      { name: 'Admin User', count: 18 },
+      { name: 'Operations Team', count: 6 },
+      { name: 'Security Team', count: 3 }
+    ]
+  },
+  topPerformers: {
+    requesters: [
+      { name: 'dev@example.com', count: 15 },
+      { name: 'ops@example.com', count: 10 },
+      { name: 'sec@example.com', count: 5 }
+    ],
+    sites: [
+      { name: 'GUA', count: 20 },
+      { name: 'SJC', count: 15 },
+      { name: 'OTHER', count: 5 }
+    ],
+    environments: [
+      { name: 'Production', count: 25 },
+      { name: 'Staging', count: 10 },
+      { name: 'Development', count: 5 }
+    ]
+  }
+};
+
+export const getFilterOptions = () => {
+  return {
+    applications: mockApplications.map(app => app.name),
+    environments: ['Production', 'Staging', 'Development', 'DR', 'Test'],
+    locations: ['GUA', 'SJC', 'OTHER'],
+    criticalities: ['1 (highest)', '2', '3', '4', '5 (lowest)'] as CriticalityLevel[],
+    timeRanges: [
+      { value: '7', label: 'Last 7 days' },
+      { value: '30', label: 'Last 30 days' },
+      { value: '90', label: 'Last 90 days' },
+      { value: '365', label: 'Last year' }
+    ]
+  };
+};

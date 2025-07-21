@@ -1,27 +1,18 @@
 // src/pages/MyProfilePage.tsx
+import { useUser } from '../hooks/useUser';
+import AdminProfile from '../components/profile/AdminProfile';
+import KeyUserDevProfile from '../components/profile/KeyUserDevProfile';
+
 export default function MyProfilePage() {
+  const { user } = useUser(); // Pega o usuário logado
+
   return (
-    <div className="max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-6">My Profile</h1>
-      <div className="bg-white p-6 rounded-lg shadow">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Name</label>
-            <p className="mt-1">John Doe</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <p className="mt-1">john.doe@company.com</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Role</label>
-            <p className="mt-1">Key User</p>
-          </div>
-          <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Edit Profile
-          </button>
-        </div>
-      </div>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {user.role === 'admin' ? (
+        <AdminProfile />
+      ) : (
+        <KeyUserDevProfile />
+      )}
     </div>
   );
 }

@@ -59,7 +59,10 @@ export interface User {
   email: string;
   role: UserRole;
   locations: LocationCode[];
-  applications?: string[]; // IDs de aplicações associadas
+  assignedApplications?: Array<{  // Adicione esta propriedade opcional
+    id: string;
+    name: string;
+  }>; // IDs de aplicações associadas
   invitedAt?: string;
   invitedBy?: string;
 }
