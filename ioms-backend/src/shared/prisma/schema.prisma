@@ -1,0 +1,412 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  KEY_USER
+  DEV
+}
+
+enum Environment {
+  PRODUCTION
+  STAGING
+  DEVELOPMENT
+  TESTING
+}
+
+enum CriticalityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum OutageStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+enum ApprovalWorkflowStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CHANGES_REQUESTED
+}
+
+enum WorkflowStepStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SKIPPED
+  CHANGES_REQUESTED
+}
+
+enum WorkflowStepType {
+  APPROVAL
+  NOTIFICATION
+  AUTOMATION
+}
+
+enum ChatParticipantRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      UserRole @default(DEV)
+  isActive  Boolean  @default(true)
+  companyId String
+  location  String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  company Company @relation(fields: [companyId], references: [id])
+  outages Outage[]
+  applications Application[]
+  approvalWorkflows ApprovalWorkflow[]
+  workflowSteps WorkflowStep[]
+  notifications Notification[]
+  chatConversations ChatParticipant[]
+  chatMessages ChatMessage[]
+  messageReads MessageRead[]
+  
+  // Relações inversas
+  approvedOutages Outage[] @relation("OutageApprover")
+  cancelledOutages Outage[] @relation("OutageCanceller")
+  updatedOutages Outage[] @relation("OutageUpdator")
+  outageHistory OutageHistory[]
+  createdChatConversations ChatConversation[]
+  updatedApplications Application[] @relation("ApplicationUpdator")
+
+  @@map("users")
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  domain     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  users User[]
+  applications Application[]
+  outages Outage[]
+  invitations Invitation[]
+
+  @@map("companies")
+}
+
+model Application {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  version     String?
+  technology  String?
+  owner       String?
+  companyId   String
+  createdBy   String
+  updatedBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  company Company @relation(fields: [companyId], references: [id])
+  createdByUser User @relation(fields: [createdBy], references: [id])
+  updatedByUser User? @relation("ApplicationUpdator", fields: [updatedBy], references: [id])
+  environments ApplicationEnvironment[]
+  locations ApplicationLocation[]
+  outages Outage[]
+  chatConversation ChatConversation?
+
+  @@map("applications")
+}
+
+model ApplicationEnvironment {
+  id            String @id @default(cuid())
+  applicationId String
+  environment   Environment
+
+  // Relações
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("application_environments")
+}
+
+model ApplicationLocation {
+  id            String @id @default(cuid())
+  applicationId String
+  code          String
+  name          String
+
+  // Relações
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  outages Outage[] // Relação inversa com Outage
+
+  @@map("application_locations")
+}
+
+model Outage {
+  id                String           @id @default(cuid())
+  applicationId     String
+  companyId         String
+  createdBy         String
+  title             String           // Campo que o código espera
+  reason            String           // Campo original do schema
+  description       String?
+  scheduledStart    DateTime
+  scheduledEnd      DateTime
+  start             DateTime         // Campo que o código espera
+  end               DateTime         // Campo que o código espera
+  criticality       CriticalityLevel
+  planned           Boolean          @default(false) // Campo que o código espera
+  estimatedDuration Int              // em segundos
+  status            OutageStatus     @default(PENDING)
+  approvedBy        String?
+  approvedAt        DateTime?
+  rejectionReason   String?
+  cancelledAt       DateTime?
+  cancelledBy       String?
+  cancellationReason String?
+  updatedBy         String?          // Campo que o código espera
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // Relações
+  application Application @relation(fields: [applicationId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
+  createdByUser User @relation(fields: [createdBy], references: [id])
+  approvedByUser User? @relation("OutageApprover", fields: [approvedBy], references: [id])
+  cancelledByUser User? @relation("OutageCanceller", fields: [cancelledBy], references: [id])
+  updatedByUser User? @relation("OutageUpdator", fields: [updatedBy], references: [id])
+  approvalWorkflows ApprovalWorkflow[]
+  history OutageHistory[]
+  notifications Notification[]
+  chatConversation ChatConversation?
+  
+  // Relações que o código espera
+  locationId        String?          // Campo que o código espera
+  location          ApplicationLocation? @relation(fields: [locationId], references: [id])
+  environments      OutageEnvironment[] // Relação many-to-many com environments
+
+  @@map("outages")
+}
+
+// Nova tabela para relacionar outages com environments
+model OutageEnvironment {
+  id          String @id @default(cuid())
+  outageId    String
+  environment Environment
+  
+  // Relações
+  outage Outage @relation(fields: [outageId], references: [id], onDelete: Cascade)
+  
+  @@unique([outageId, environment])
+  @@map("outage_environments")
+}
+
+model ApprovalWorkflow {
+  id        String   @id @default(cuid())
+  outageId  String
+  name      String
+  description String?
+  status    ApprovalWorkflowStatus @default(PENDING)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  outage Outage @relation(fields: [outageId], references: [id], onDelete: Cascade)
+  steps WorkflowStep[]
+  
+  // Relação inversa com User (se necessário)
+  createdBy String?
+  createdByUser User? @relation(fields: [createdBy], references: [id])
+
+  @@map("approval_workflows")
+}
+
+model WorkflowStep {
+  id                String              @id @default(cuid())
+  workflowId        String
+  order             Int
+  type              WorkflowStepType
+  name              String
+  description       String?
+  assigneeId        String?
+  status            WorkflowStepStatus @default(PENDING)
+  completedAt       DateTime?
+  comments          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relações
+  workflow ApprovalWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  assignee User? @relation(fields: [assigneeId], references: [id])
+
+  @@map("workflow_steps")
+}
+
+model OutageHistory {
+  id         String   @id @default(cuid())
+  outageId   String
+  action     String
+  field      String?
+  oldValue   String?
+  newValue   String?
+  userId     String
+  timestamp  DateTime @default(now())
+  comments   String?
+  createdAt  DateTime @default(now()) // Campo que o código espera
+  changeType String?                  // Campo que o código espera
+  reason     String?                  // Campo que o código espera
+
+  // Relações
+  outage Outage @relation(fields: [outageId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("outage_history")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  priority  String?  // Campo que o código espera
+  data      Json?
+  isRead    Boolean  @default(false)
+  readAt    DateTime?
+  outageId  String?
+  createdAt DateTime @default(now())
+
+  // Relações
+  user User @relation(fields: [userId], references: [id])
+  outage Outage? @relation(fields: [outageId], references: [id])
+
+  @@map("notifications")
+}
+
+// ===== CHAT MODELS =====
+
+model ChatConversation {
+  id                    String   @id @default(cuid())
+  title                 String
+  description           String?
+  type                  String   @default("group") // direct, group, outage, application
+  relatedOutageId       String?
+  relatedApplicationId  String?
+  createdBy             String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relações
+  createdByUser User @relation(fields: [createdBy], references: [id])
+  outage Outage? @relation(fields: [relatedOutageId], references: [id])
+  application Application? @relation(fields: [relatedApplicationId], references: [id])
+  participants ChatParticipant[]
+  messages ChatMessage[]
+  lastMessage ChatMessage? @relation("ConversationLastMessage", fields: [lastMessageId], references: [id])
+  
+  // Campo para referenciar a última mensagem
+  lastMessageId String?
+  
+  // Adicionar @unique para as relações one-to-one
+  @@unique([relatedOutageId])
+  @@unique([relatedApplicationId])
+
+  @@map("chat_conversations")
+}
+
+model ChatParticipant {
+  id              String              @id @default(cuid())
+  conversationId  String
+  userId          String
+  role            ChatParticipantRole @default(MEMBER)
+  joinedAt        DateTime            @default(now())
+  leftAt          DateTime?
+
+  // Relações
+  conversation ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+
+  @@map("chat_participants")
+}
+
+model ChatMessage {
+  id                String   @id @default(cuid())
+  conversationId    String
+  userId            String
+  content           String
+  replyToMessageId  String?
+  attachmentUrl     String?
+  attachmentType    String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relações
+  conversation ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replyToMessage ChatMessage? @relation("MessageReplies", fields: [replyToMessageId], references: [id])
+  replies ChatMessage[] @relation("MessageReplies")
+  readBy MessageRead[]
+  conversationLastMessage ChatConversation[] @relation("ConversationLastMessage")
+
+  @@map("chat_messages")
+}
+
+model MessageRead {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+
+  // Relações
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+
+  @@map("message_reads")
+}
+
+model Invitation {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  token     String   @unique
+  expiresAt DateTime
+  role      UserRole
+  companyId String
+  firstName String?  // Campo que o código espera
+  lastName  String?  // Campo que o código espera
+  createdAt DateTime @default(now())
+
+  // Relações
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("invitations")
+}
