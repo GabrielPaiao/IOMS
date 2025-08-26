@@ -10,10 +10,7 @@ async function bootstrap() {
   
   // Configuração de CORS
   app.enableCors({
-    origin: [
-      configService.get('FRONTEND_URL') || 'http://localhost:3000',
-      'http://localhost:5173', // Vite dev server
-    ],
+    origin: ['http://localhost:5173'], // Permite apenas o frontend Vite
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],

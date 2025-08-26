@@ -22,7 +22,19 @@ export class OutagesService {
     // Criar outage
     const outage = await this.prisma.outage.create({
       data: {
-        ...createOutageDto,
+        title: createOutageDto.title,
+        reason: createOutageDto.title, // Map title to reason
+        description: createOutageDto.description,
+        criticality: createOutageDto.criticality,
+        applicationId: createOutageDto.applicationId,
+        locationId: createOutageDto.locationId,
+        start: createOutageDto.start,
+        end: createOutageDto.end,
+        scheduledStart: createOutageDto.start, // Map start to scheduledStart
+        scheduledEnd: createOutageDto.end, // Map end to scheduledEnd
+        planned: createOutageDto.planned || false,
+        estimatedDuration: Math.ceil((new Date(createOutageDto.end).getTime() - new Date(createOutageDto.start).getTime()) / 1000), // Duration in seconds
+        companyId: application.companyId,
         createdBy: userId,
         status: 'PENDING',
       },
@@ -101,7 +113,7 @@ export class OutagesService {
           include: {
             steps: {
               include: {
-                user: { select: { id: true, firstName: true, lastName: true, email: true } },
+                assignee: { select: { id: true, firstName: true, lastName: true, email: true } },
               },
             },
           },
@@ -126,7 +138,7 @@ export class OutagesService {
           include: {
             steps: {
               include: {
-                user: { select: { id: true, firstName: true, lastName: true, email: true } },
+                assignee: { select: { id: true, firstName: true, lastName: true, email: true } },
               },
             },
           },
@@ -157,7 +169,7 @@ export class OutagesService {
           include: {
             steps: {
               include: {
-                user: { select: { id: true, firstName: true, lastName: true, email: true } },
+                assignee: { select: { id: true, firstName: true, lastName: true, email: true } },
               },
             },
           },
@@ -183,7 +195,7 @@ export class OutagesService {
           include: {
             steps: {
               include: {
-                user: { select: { id: true, firstName: true, lastName: true, email: true } },
+                assignee: { select: { id: true, firstName: true, lastName: true, email: true } },
               },
             },
           },
@@ -236,7 +248,7 @@ export class OutagesService {
     });
 
     // Implementar lógica de detecção de conflitos
-    const conflicts = [];
+    const conflicts: any[] = [];
     for (let i = 0; i < outages.length; i++) {
       for (let j = i + 1; j < outages.length; j++) {
         const outage1 = outages[i];
@@ -271,8 +283,16 @@ export class OutagesService {
   }
 
   async getHistory(id: string) {
-    const outage = await this.findOne(id);
-    return outage.history;
+    const history = await this.prisma.outageHistory.findMany({
+      where: { outageId: id },
+      include: {
+        user: {
+          select: { id: true, firstName: true, lastName: true, email: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    return history;
   }
 
   async update(id: string, updateOutageDto: any, userId: string) {

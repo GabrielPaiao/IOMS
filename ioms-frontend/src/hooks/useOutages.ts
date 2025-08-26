@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Outage } from '../types/outage';
+import type { Outage } from '../types/outage';
 import outagesService from '../services/outages.service';
 
 interface UseOutagesOptions {

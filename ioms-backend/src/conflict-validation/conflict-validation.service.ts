@@ -21,19 +21,15 @@ export class ConflictValidationService {
     const conflictingOutages = await this.prisma.outage.findMany({
       where: {
         applicationId,
-        // locationId não existe no schema, vamos usar application.locations
         application: {
           locations: {
             some: {
               code: locationId
             }
-          }
-        },
-        // environments não existe no schema, vamos usar application.environments
-        application: {
+          },
           environments: {
             some: {
-              environment: { in: environmentIds }
+              environment: { in: environmentIds as any[] }
             }
           }
         },
@@ -153,7 +149,7 @@ export class ConflictValidationService {
         application: {
           environments: {
             some: {
-              environment: { in: environmentIds }
+              environment: { in: environmentIds as any[] }
             }
           }
         },
@@ -177,7 +173,7 @@ export class ConflictValidationService {
       conflictingOutageTitle: outage.reason,
       conflictType: 'same_environment',
       severity: this.calculateSeverity(outage.criticality, start, end, outage.scheduledStart, outage.scheduledEnd),
-      description: `Conflict with outage "${outage.reason}" in environment(s) ${outage.application.environments.map(e => e.environment).join(', ')}`,
+      description: `Conflict with outage "${outage.reason}" in environment(s) ${outage.application?.environments?.map(e => e.environment).join(', ') || 'unknown'}`,
       outage
     }));
   }
@@ -241,7 +237,7 @@ export class ConflictValidationService {
     return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60)); // duração em minutos
   }
 
-  private async suggestAlternativeSlots(
+  async suggestAlternativeSlots(
     applicationId: string,
     locationId: string,
     environmentIds: string[],
@@ -349,6 +345,59 @@ export class ConflictValidationService {
     }
   }
 
+  async checkBusinessRules(outage: any) {
+    const rules = {
+      duration: this.validateDuration(outage.start, outage.end),
+      timing: this.validateTiming(outage.start, outage.end),
+      criticality: this.validateCriticality(outage.criticality),
+      notification: this.validateNotificationPeriod(outage.start)
+    };
+
+    return {
+      valid: Object.values(rules).every(rule => rule.valid),
+      rules
+    };
+  }
+
+  private validateDuration(start: string, end: string) {
+    const duration = this.calculateDurationInMinutes(start, end);
+    const valid = duration >= 15 && duration <= 480; // 15 min to 8 hours
+    return {
+      valid,
+      message: valid ? 'Duration is acceptable' : 'Duration must be between 15 minutes and 8 hours'
+    };
+  }
+
+  private validateTiming(start: string, end: string) {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const valid = startDate > new Date();
+    return {
+      valid,
+      message: valid ? 'Timing is acceptable' : 'Outage must be scheduled in the future'
+    };
+  }
+
+  private validateCriticality(criticality: string) {
+    const validCriticalities = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+    const valid = validCriticalities.includes(criticality);
+    return {
+      valid,
+      message: valid ? 'Criticality level is valid' : 'Invalid criticality level'
+    };
+  }
+
+  private validateNotificationPeriod(start: string) {
+    const startDate = new Date(start);
+    const now = new Date();
+    const hoursDiff = (startDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const valid = hoursDiff >= 2; // At least 2 hours notice
+    return {
+      valid,
+      message: valid ? 'Notification period is sufficient' : 'At least 2 hours notice required'
+    };
+  }
+
   private getHighestSeverity(conflicts: any[]): string {
     if (conflicts.some(c => c.severity === 'high')) {
       return 'high';
@@ -366,5 +415,11 @@ export class ConflictValidationService {
     const overlapHours = Math.round(overlap / (1000 * 60 * 60) * 100) / 100;
 
     return `Time overlap of ${overlapHours} hours with outage "${outage.reason}"`;
+  }
+
+  private calculateDurationInMinutes(start: string, end: string): number {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    return Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60));
   }
 }

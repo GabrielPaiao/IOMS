@@ -6,6 +6,9 @@ export type User = {
   role: 'dev' | 'key_user' | 'admin';
   locations: string[]; // Mude de location para array de strings
   companyId?: string;
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
   assignedApplications?: Array<{
     id: string;
     name: string;

@@ -1,5 +1,5 @@
 import api from './api';
-import { User } from '../types/user';
+import type { User } from '../types/user';
 
 export interface CreateUserRequest {
   email: string;

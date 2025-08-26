@@ -6,8 +6,7 @@ import {
   ChartBar, 
   Clock, 
   CheckCircle, 
-  XCircle, 
-  ExclamationTriangle,
+  Warning as ExclamationTriangle,
   Calendar,
   Users,
   Building

@@ -21,6 +21,8 @@ export interface Application {
   locations: ApplicationLocation[];
   createdAt: string;
   createdBy: string;
+  companyId: string;
+  outages?: Outage[];
 }
 
 export interface ApplicationLocation {
@@ -150,6 +152,9 @@ export interface User {
   role: UserRole;
   companyId?: string;
   locations: LocationCode[];
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
   assignedApplications?: Array<{
     id: string;
     name: string;

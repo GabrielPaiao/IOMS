@@ -73,16 +73,10 @@ export class CompaniesService {
           include: {
             environments: true,
             locations: {
-              include: {
-                location: true,
-                keyUsers: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    email: true,
-                  },
-                },
+              select: {
+                id: true,
+                name: true,
+                code: true
               },
             },
           },

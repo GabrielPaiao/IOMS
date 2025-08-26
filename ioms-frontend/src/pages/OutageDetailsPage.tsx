@@ -5,19 +5,15 @@ import { useAuth } from '../context/AuthContext';
 import { useOutagesAdvanced } from '../hooks/useOutagesAdvanced';
 import { 
   ArrowLeft, 
-  Edit, 
+  PencilSimple as Edit, 
   Trash, 
   Calendar, 
   Clock, 
-  Warning,
   CheckCircle,
   XCircle,
   ClockCounterClockwise,
   User,
-  MapPin,
-  Server,
-  ChatCircle,
-  History
+  ChatCircle
 } from '@phosphor-icons/react';
 import CriticalityBadge from '../components/outageRequests/CriticalityBadge';
 import ApprovalActions from '../components/outageRequests/ApprovalActions';
@@ -36,10 +32,10 @@ export default function OutageDetailsPage() {
   } = useOutagesAdvanced();
 
   const [outage, setOutage] = useState<any>(null);
-  const [history, setHistory] = useState<any[]>([]);
+
   const [activeTab, setActiveTab] = useState<'details' | 'history' | 'workflow'>('details');
   const [isLoadingOutage, setIsLoadingOutage] = useState(false);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
 
   useEffect(() => {
     if (id) {
@@ -64,15 +60,12 @@ export default function OutageDetailsPage() {
 
   const loadHistory = async () => {
     if (!id) return;
-
-    setIsLoadingHistory(true);
+    
     try {
-      const historyData = await getChangeHistory(id);
-      setHistory(historyData);
+      // History is now loaded directly by OutageHistoryPanel component
+      await getChangeHistory(id);
     } catch (err) {
       console.error('Error loading history:', err);
-    } finally {
-      setIsLoadingHistory(false);
     }
   };
 
@@ -151,7 +144,7 @@ export default function OutageDetailsPage() {
     if (!outage || !user) return false;
     
     // Apenas admin pode deletar
-    return user.role === 'ADMIN';
+    return user.role?.toUpperCase() === 'ADMIN';
   };
 
   if (isLoading || isLoadingOutage) {
@@ -408,7 +401,7 @@ export default function OutageDetailsPage() {
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">
                         Ações de Aprovação
                       </h3>
-                      <ApprovalActions outageId={outage.id} />
+                      <ApprovalActions outageId={outage.id} outage={outage} />
                     </div>
                   )}
 
@@ -433,7 +426,7 @@ export default function OutageDetailsPage() {
 
           {activeTab === 'history' && (
             <div className="p-6">
-              <OutageHistoryPanel outageId={outage.id} history={history} isLoading={isLoadingHistory} />
+              <OutageHistoryPanel outageId={outage.id} />
             </div>
           )}
 

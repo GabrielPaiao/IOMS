@@ -2,16 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { mockApplications } from '../mocks/dataMocks';
+import type { Application } from '../types/outage';
 
 type EditMode = 'environments' | 'locations' | 'keyUsers';
-
-interface Application {
-  id: string;
-  name: string;
-  environments: Array<{ environment: string }>;
-  locations: Array<{ code: string; name: string }>;
-  companyId: string;
-}
 
 export default function EditSectionPage() {
   const { id, mode } = useParams<{ id: string; mode: EditMode }>();
@@ -57,9 +50,13 @@ export default function EditSectionPage() {
       const updatedApp = { ...application };
       
       if (type === 'environments') {
-        updatedApp.environments = items.map(env => ({ environment: env }));
+        updatedApp.environments = items;
       } else if (type === 'locations') {
-        updatedApp.locations = items.map(loc => ({ code: loc, name: loc }));
+        updatedApp.locations = items.map(loc => ({ 
+          code: loc as any, 
+          keyUsers: [],
+          description: '' 
+        }));
       }
       
       setApplication(updatedApp);
@@ -113,9 +110,9 @@ export default function EditSectionPage() {
       case 'environments':
         return (
           <EditableList
-            items={application.environments.map(env => env.environment)}
+            items={application.environments}
             onSave={(items: string[]) => handleSave(items, 'environments')}
-            editable={user?.role === 'ADMIN'}
+            editable={user?.role?.toUpperCase() === 'ADMIN'}
             title="Environments"
             placeholder="Add new environment"
           />
@@ -126,7 +123,7 @@ export default function EditSectionPage() {
           <EditableList
             items={application.locations.map(loc => loc.code)}
             onSave={(items: string[]) => handleSave(items, 'locations')}
-            editable={user?.role === 'ADMIN'}
+            editable={user?.role?.toUpperCase() === 'ADMIN'}
             title="Locations"
             placeholder="Add new location"
             itemLink={(item: string) => `/applications/${id}/edit/keyUsers?location=${item}`}
@@ -134,7 +131,7 @@ export default function EditSectionPage() {
         );
 
       case 'keyUsers':
-        return <KeyUsersEditor applicationId={id} />;
+        return <KeyUsersEditor applicationId={id || ''} />;
 
       default:
         return <div>Invalid section</div>;

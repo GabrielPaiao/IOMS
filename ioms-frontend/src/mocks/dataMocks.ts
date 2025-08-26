@@ -36,7 +36,8 @@ export const mockApplications: AppType[] = [
       }
     ],
     createdAt: new Date().toISOString(),
-    createdBy: 'system'
+    createdBy: 'system',
+    companyId: 'company-1'
   },
   {
     id: '2',
@@ -54,7 +55,8 @@ export const mockApplications: AppType[] = [
       }
     ],
     createdAt: new Date().toISOString(),
-    createdBy: 'system'
+    createdBy: 'system',
+    companyId: 'company-1'
   }
 ];
 

@@ -386,8 +386,8 @@ export class ChatService {
   // ===== FUNCIONALIDADES ADICIONAIS =====
 
   async markConversationAsRead(userId: string, conversationId: string) {
-    // Marcar todas as mensagens não lidas como lidas
-    await this.prisma.chatMessage.updateMany({
+    // Buscar mensagens não lidas pelo usuário
+    const unreadMessages = await this.prisma.chatMessage.findMany({
       where: {
         conversationId: conversationId,
         userId: { not: userId },
@@ -397,15 +397,20 @@ export class ChatService {
           }
         }
       },
-      data: {
-        readBy: {
-          create: {
-            userId: userId,
-            readAt: new Date()
-          }
-        }
-      }
+      select: { id: true }
     });
+
+    // Marcar mensagens como lidas
+    if (unreadMessages.length > 0) {
+      await this.prisma.messageRead.createMany({
+        data: unreadMessages.map(message => ({
+          messageId: message.id,
+          userId: userId,
+          readAt: new Date()
+        })),
+        skipDuplicates: true
+      });
+    }
 
     return { message: 'Conversa marcada como lida' };
   }

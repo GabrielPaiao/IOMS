@@ -220,10 +220,14 @@ export class DashboardService {
     const approvalTimes = outages
       .filter(o => o.status === 'APPROVED' && o.approvalWorkflows)
       .map(o => {
-        const completedSteps = o.approvalWorkflows.filter(w => w.status === 'APPROVED').length;
-        if (completedSteps > 0) {
-          const lastStep = completedSteps[completedSteps.length - 1];
-          return new Date(lastStep.completedAt).getTime() - new Date(o.createdAt).getTime();
+        const completedWorkflows = o.approvalWorkflows.filter(w => w.status === 'APPROVED');
+        if (completedWorkflows.length > 0) {
+          const workflow = completedWorkflows[completedWorkflows.length - 1];
+          const completedSteps = workflow.steps.filter(s => s.status === 'APPROVED' && s.completedAt);
+          if (completedSteps.length > 0) {
+            const lastCompletedStep = completedSteps[completedSteps.length - 1];
+            return new Date(lastCompletedStep.completedAt!).getTime() - new Date(o.createdAt).getTime();
+          }
         }
         return 0;
       })

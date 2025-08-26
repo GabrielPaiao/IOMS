@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: ioms_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: PI$53^MUgoobyY-Bielbita2005.
     ports:
       - "5434:5432"
     volumes:

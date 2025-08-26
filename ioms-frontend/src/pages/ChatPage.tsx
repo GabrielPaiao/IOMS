@@ -1,7 +1,7 @@
 // src/pages/ChatPage.tsx
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { PaperPlaneRight, User, Users, MessageCircle } from '@phosphor-icons/react';
+import { PaperPlaneRight, ChatCircle as MessageCircle } from '@phosphor-icons/react';
 
 interface Message {
   id: string;
@@ -133,7 +133,7 @@ export default function ChatPage() {
       const newMessage: Message = {
         id: Date.now().toString(),
         senderId: user?.id || '',
-        senderName: user?.firstName + ' ' + user?.lastName || 'Unknown User',
+        senderName: (user?.firstName || '') + ' ' + (user?.lastName || '') || user?.name || 'Unknown User',
         senderEmail: user?.email || '',
         text: message.trim(),
         timestamp: new Date().toISOString(),
@@ -177,7 +177,7 @@ export default function ChatPage() {
         id: Date.now().toString(),
         topic: newConversationTopic.trim(),
         participants: [
-          { id: user?.id || '', name: user?.firstName + ' ' + user?.lastName || 'Unknown', email: user?.email || '', role: user?.role || 'DEV' },
+          { id: user?.id || '', name: (user?.firstName || '') + ' ' + (user?.lastName || '') || user?.name || 'Unknown', email: user?.email || '', role: user?.role || 'DEV' },
           ...users.filter(u => selectedParticipants.includes(u.id))
         ],
         lastMessage: 'Conversation started',
@@ -221,7 +221,7 @@ export default function ChatPage() {
         {
           id: '2',
           senderId: user?.id || '',
-          senderName: user?.firstName + ' ' + user?.lastName || 'Unknown User',
+          senderName: (user?.firstName || '') + ' ' + (user?.lastName || '') || user?.name || 'Unknown User',
           senderEmail: user?.email || '',
           text: 'Podemos agendar para depois das 14h?',
           timestamp: '2025-01-20T10:30:00Z',

@@ -19,8 +19,8 @@ export class IsUniqueCompanyNameConstraint
     if (!this.prisma) {
       throw new Error('PrismaService not injected');
     }
-    const company = await this.prisma.company.findUnique({
-      where: { id: companyId },
+    const company = await this.prisma.company.findFirst({
+      where: { name },
     });
     return !company;
   }

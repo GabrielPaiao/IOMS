@@ -5,12 +5,12 @@ import { useAuth } from '../context/AuthContext';
 import { useOutagesAdvanced } from '../hooks/useOutagesAdvanced';
 import { 
   Plus, 
-  Search, 
-  Filter, 
+  MagnifyingGlass as Search, 
+  Funnel as Filter, 
   Eye, 
-  Edit, 
+  PencilSimple as Edit, 
   Trash, 
-  Server, 
+  Desktop as Server, 
   MapPin, 
   Clock,
   Building,

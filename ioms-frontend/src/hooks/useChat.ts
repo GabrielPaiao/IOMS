@@ -1,7 +1,7 @@
 // src/hooks/useChat.ts
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import chatService, { ChatMessage, ChatConversation, CreateConversationRequest } from '../services/chat.service';
+import chatService, { type ChatMessage, type ChatConversation, type CreateConversationRequest } from '../services/chat.service';
 
 export const useChat = () => {
   const { user } = useAuth();
@@ -129,7 +129,7 @@ export const useChat = () => {
         id: '2',
         conversationId,
         senderId: user?.id || '',
-        senderName: user?.firstName + ' ' + user?.lastName || 'Unknown User',
+        senderName: (user?.firstName || '') + ' ' + (user?.lastName || '') || user?.name || 'Unknown User',
         senderEmail: user?.email || '',
         text: 'Podemos agendar para depois das 14h?',
         timestamp: '2025-01-20T10:30:00Z',
@@ -160,7 +160,7 @@ export const useChat = () => {
         id: Date.now().toString(),
         conversationId: currentConversation.id,
         senderId: user?.id || '',
-        senderName: user?.firstName + ' ' + user?.lastName || 'Unknown User',
+        senderName: (user?.firstName || '') + ' ' + (user?.lastName || '') || user?.name || 'Unknown User',
         senderEmail: user?.email || '',
         text: text.trim(),
         timestamp: new Date().toISOString(),
@@ -214,7 +214,7 @@ export const useChat = () => {
         id: Date.now().toString(),
         topic: data.topic,
         participants: [
-          { id: user?.id || '', name: user?.firstName + ' ' + user?.lastName || 'Unknown', email: user?.email || '', role: user?.role || 'DEV' },
+          { id: user?.id || '', name: (user?.firstName || '') + ' ' + (user?.lastName || '') || user?.name || 'Unknown', email: user?.email || '', role: user?.role || 'DEV' },
           // TODO: Adicionar participantes reais
         ],
         lastMessage: 'Conversation started',

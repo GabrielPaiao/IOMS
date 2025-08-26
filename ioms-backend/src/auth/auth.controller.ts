@@ -66,7 +66,12 @@ export class AuthController {
     description: 'Email already exists' 
   })
   async registerAdmin(@Body() registerAdminDto: RegisterAdminDto) {
-    return this.authService.registerAdmin(registerAdminDto);
+    try {
+      return await this.authService.registerAdmin(registerAdminDto);
+    } catch (error) {
+      console.log('Erro no controller ao registrar admin:', error);
+      throw error;
+    }
   }
 
   @Public()

@@ -2,7 +2,7 @@
 import { CogIcon, EnvelopeIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import { useUser } from '../../hooks/useUser';
 import { mockApplications } from '../../mocks/dataMocks';
-import type { User } from '../../types/outage';
+
 
 export default function KeyUserDevProfile() {
   const { user } = useUser('key_user');

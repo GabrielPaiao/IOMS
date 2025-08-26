@@ -5,8 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useOutagesAdvanced } from '../hooks/useOutagesAdvanced';
 import { 
   Plus, 
-  Filter, 
-  Search, 
+  Funnel as Filter, 
+  MagnifyingGlass as Search, 
   Calendar, 
   Clock, 
   Warning,

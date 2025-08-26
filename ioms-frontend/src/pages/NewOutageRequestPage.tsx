@@ -20,7 +20,7 @@ export default function NewOutageRequestPage() {
     applications, 
     createOutage, 
     isLoading, 
-    error,
+
     loadApplications 
   } = useOutagesAdvanced();
 

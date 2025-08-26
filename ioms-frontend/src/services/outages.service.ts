@@ -246,7 +246,7 @@ class OutagesService {
   }
 
   // Enviar notificações (placeholder para integração futura)
-  private async sendOutageNotifications(outageId: string, action: string): Promise<void> {
+  async sendOutageNotifications(outageId: string, action: string): Promise<void> {
     try {
       // TODO: Implementar integração com serviço de notificações
       console.log(`Notification sent for outage ${outageId}: ${action}`);

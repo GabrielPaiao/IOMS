@@ -218,7 +218,7 @@ export class ApprovalWorkflowsService {
     const anyRejected = allSteps.some(s => s.status === 'REJECTED');
 
     // Atualizar status do workflow
-    let workflowStatus = 'PENDING';
+    let workflowStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING';
     if (allApproved) {
       workflowStatus = 'APPROVED';
     } else if (anyRejected) {

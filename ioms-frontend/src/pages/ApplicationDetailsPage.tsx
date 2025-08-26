@@ -1,30 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { useOutagesAdvanced } from '../hooks/useOutagesAdvanced';
 import { 
   ArrowLeft, 
-  Edit, 
+  PencilSimple as Edit, 
   Trash, 
   Plus, 
   Calendar, 
   MapPin, 
-  Server, 
-  User, 
+  Desktop as Server, 
   Clock,
-  Warning,
-  CheckCircle,
-  XCircle,
   ClockCounterClockwise
 } from '@phosphor-icons/react';
 
 export default function ApplicationDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { 
-    getApplicationById, 
-    getOutageById,
+    getApplicationById,
     isLoading, 
     error,
     clearError 
@@ -48,10 +41,9 @@ export default function ApplicationDetailsPage() {
       const appData = await getApplicationById(id);
       setApplication(appData);
       
-      // Carregar outages recentes se disponíveis
-      if (appData.outages && appData.outages.length > 0) {
-        setRecentOutages(appData.outages);
-      }
+      // TODO: Load recent outages from separate API call
+      // For now, we'll leave recent outages empty
+      setRecentOutages([]);
     } catch (err) {
       console.error('Error loading application:', err);
     } finally {

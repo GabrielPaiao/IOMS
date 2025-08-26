@@ -91,8 +91,8 @@ export class UsersService {
       const user = await tx.user.create({
         data: {
           email: invitation.email,
-          firstName: invitation.firstName,
-          lastName: invitation.lastName,
+          firstName: invitation.firstName || 'User',
+          lastName: invitation.lastName || '',
           password: await bcrypt.hash(createUserDto.password, this.SALT_ROUNDS),
           role: invitation.role,
           companyId: invitation.companyId,

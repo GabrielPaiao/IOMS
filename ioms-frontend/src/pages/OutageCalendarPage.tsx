@@ -1,15 +1,12 @@
 // ioms-frontend/src/pages/OutageCalendarPage.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { useOutagesAdvanced } from '../hooks/useOutagesAdvanced';
 import { 
-  Calendar as CalendarIcon, 
-  ChevronLeft, 
-  ChevronRight, 
+  CaretLeft as ChevronLeft, 
+  CaretRight as ChevronRight, 
   Plus,
   Clock,
-  Warning,
   CheckCircle,
   XCircle,
   ClockCounterClockwise
@@ -18,7 +15,7 @@ import CriticalityBadge from '../components/outageRequests/CriticalityBadge';
 
 export default function OutageCalendarPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+
   const { 
     getCalendar,
     isLoading, 
