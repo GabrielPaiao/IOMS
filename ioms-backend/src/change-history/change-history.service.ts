@@ -305,7 +305,7 @@ export class ChangeHistoryService {
         changeType: type || 'comment',
         userId,
         reason: 'User comment added',
-        action: 'CREATE'
+  action: 'CREATE',
       },
       include: {
         user: {

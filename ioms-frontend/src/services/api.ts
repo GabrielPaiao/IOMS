@@ -11,9 +11,10 @@ const api: AxiosInstance = axios.create({
 });
 
 // Interceptor para adicionar token de autenticação
+import { config as appConfig } from '../../config';
 api.interceptors.request.use(
   (config: any) => {
-    const token = localStorage.getItem(config.TOKEN_STORAGE_KEY);
+    const token = localStorage.getItem(appConfig.TOKEN_STORAGE_KEY);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

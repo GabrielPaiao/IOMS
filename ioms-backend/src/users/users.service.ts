@@ -127,6 +127,78 @@ export class UsersService {
     });
   }
 
+  async getMyApplications(userId: string) {
+    // Primeiro, pegar as aplicações onde o usuário é key user
+    const keyUserApplications = await this.prisma.$queryRaw`
+      SELECT DISTINCT app.*
+      FROM applications app
+      INNER JOIN application_key_users aku ON app.id = aku."applicationId"
+      WHERE aku."userId" = ${userId}
+      ORDER BY app."createdAt" DESC
+    ` as any[];
+
+    // Para cada aplicação, buscar os relacionamentos
+    const enrichedApplications: any[] = [];
+    
+    for (const app of keyUserApplications) {
+      // Buscar ambientes
+      const environments = await this.prisma.applicationEnvironment.findMany({
+        where: { applicationId: app.id },
+        select: { environment: true }
+      });
+
+      // Buscar localizações
+      const locations = await this.prisma.applicationLocation.findMany({
+        where: { applicationId: app.id },
+        select: { code: true, name: true }
+      });
+
+      // Buscar empresa
+      const company = await this.prisma.company.findUnique({
+        where: { id: app.companyId },
+        select: { id: true, name: true }
+      });
+
+      // Buscar usuário criador
+      const createdByUser = await this.prisma.user.findUnique({
+        where: { id: app.createdBy },
+        select: { id: true, firstName: true, lastName: true, email: true }
+      });
+
+      // Contar outages
+      const outageCount = await this.prisma.outage.count({
+        where: { applicationId: app.id }
+      });
+
+      // Buscar key users
+      const keyUsersData = await this.prisma.$queryRaw`
+        SELECT 
+          aku.id as keyuser_id,
+          u.id as user_id, 
+          u."firstName" as first_name, 
+          u."lastName" as last_name, 
+          u.email 
+        FROM application_key_users aku
+        INNER JOIN users u ON aku."userId" = u.id
+        WHERE aku."applicationId" = ${app.id}
+      ` as any[];
+
+      enrichedApplications.push({
+        ...app,
+        environments,
+        locations,
+        company,
+        createdByUser,
+        keyUsers: keyUsersData,
+        _count: {
+          outages: outageCount
+        }
+      });
+    }
+
+    return enrichedApplications;
+  }
+
   // Métodos auxiliares privados
   private async validateAdminInviter(inviterId: string, companyId: string) {
     const inviter = await this.prisma.user.findUnique({

@@ -1,11 +1,30 @@
 // src/hooks/useUser.ts
-import { useState } from 'react';
-import type { UserRole } from '../types/outage';
-import { authMock } from '../mocks/dataMocks';
+import { useEffect, useState } from 'react';
+import usersService from '../services/users.service';
+import { useAuth } from '../context/AuthContext';
 
-export function useUser(initialRole: UserRole = 'admin') {
-  // Mock inicial usando os dados do dataMocks
-  const [user] = useState(authMock[initialRole]);
+export function useUser() {
+  const { user: authUser } = useAuth();
+  const [user, setUser] = useState<any>(authUser);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  return { user };
+  useEffect(() => {
+    if (!authUser?.id) return;
+    const fetchUser = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const userData = await usersService.getUserById(authUser.id);
+        setUser(userData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erro ao carregar usuário');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, [authUser?.id]);
+
+  return { user, loading, error };
 }

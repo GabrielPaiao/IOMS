@@ -24,7 +24,7 @@ export default function DashboardPage() {
   } = useOutagesAdvanced();
 
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'quarter'>('month');
-  const [selectedEnvironment, setSelectedEnvironment] = useState<string>('all');
+  // Filtro por ambiente removido
 
   useEffect(() => {
     if (user?.companyId) {
@@ -108,22 +108,7 @@ export default function DashboardPage() {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ambiente
-              </label>
-              <select
-                value={selectedEnvironment}
-                onChange={(e) => setSelectedEnvironment(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">Todos os Ambientes</option>
-                <option value="PRODUCTION">Produção</option>
-                <option value="STAGING">Staging</option>
-                <option value="DEVELOPMENT">Desenvolvimento</option>
-                <option value="TESTING">Teste</option>
-              </select>
-            </div>
+            {/* Filtro por ambiente removido */}
           </div>
         </div>
 

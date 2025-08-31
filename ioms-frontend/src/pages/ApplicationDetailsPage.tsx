@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useOutagesAdvanced } from '../hooks/useOutagesAdvanced';
+import applicationsService from '../services/applications.service';
 import { 
   ArrowLeft, 
   PencilSimple as Edit, 
@@ -10,7 +11,8 @@ import {
   MapPin, 
   Desktop as Server, 
   Clock,
-  ClockCounterClockwise
+  ClockCounterClockwise,
+  Users
 } from '@phosphor-icons/react';
 
 export default function ApplicationDetailsPage() {
@@ -27,8 +29,9 @@ export default function ApplicationDetailsPage() {
   const [recentOutages, setRecentOutages] = useState<any[]>([]);
   const [isLoadingApp, setIsLoadingApp] = useState(false);
 
+
   useEffect(() => {
-    if (id) {
+    if (id && id !== 'new') {
       loadApplication();
     }
   }, [id]);
@@ -61,10 +64,12 @@ export default function ApplicationDetailsPage() {
     }
 
     try {
-      // TODO: Implementar delete da aplicação
+      await applicationsService.deleteApplication(id!);
+      alert('Aplicação excluída com sucesso!');
       navigate('/applications');
     } catch (err) {
       console.error('Error deleting application:', err);
+      alert('Erro ao excluir aplicação. Tente novamente.');
     }
   };
 
@@ -235,20 +240,6 @@ export default function ApplicationDetailsPage() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1">
-                    Tecnologia
-                  </label>
-                  <p className="text-gray-900">{application.technology || 'N/A'}</p>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">
-                    Proprietário
-                  </label>
-                  <p className="text-gray-900">{application.owner || 'N/A'}</p>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">
                     Criado em
                   </label>
                   <p className="text-gray-900">{formatDate(application.createdAt)}</p>
@@ -266,6 +257,39 @@ export default function ApplicationDetailsPage() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* Key Users */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <Users className="h-5 w-5 mr-2 text-indigo-600" />
+                Key Users
+              </h2>
+              
+              {application.keyUsers && application.keyUsers.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {application.keyUsers.map((keyUser: any) => (
+                    <div key={keyUser.keyuser_id} className="bg-indigo-50 border border-indigo-200 rounded-md p-4">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-medium">
+                          {keyUser.first_name ? keyUser.first_name[0] : keyUser.email[0].toUpperCase()}
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-indigo-900 font-medium">
+                            {keyUser.first_name && keyUser.last_name 
+                              ? `${keyUser.first_name} ${keyUser.last_name}` 
+                              : keyUser.email
+                            }
+                          </p>
+                          <p className="text-indigo-600 text-sm">{keyUser.email}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">Nenhum key user configurado</p>
+              )}
             </div>
 
             {/* Ambientes */}
@@ -370,6 +394,13 @@ export default function ApplicationDetailsPage() {
                   <span className="text-sm text-gray-600">Total de Outages</span>
                   <span className="text-lg font-bold text-blue-600">
                     {application._count?.outages || 0}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Key Users</span>
+                  <span className="text-lg font-bold text-indigo-600">
+                    {application.keyUsers?.length || 0}
                   </span>
                 </div>
                 

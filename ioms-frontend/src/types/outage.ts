@@ -16,7 +16,7 @@ export interface Application {
   id: string;
   name: string;
   description: string;
-  vitality: ApplicationVitality;
+  vitality?: ApplicationVitality;
   environments: Environment[];
   locations: ApplicationLocation[];
   createdAt: string;

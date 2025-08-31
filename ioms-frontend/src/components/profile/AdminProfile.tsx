@@ -1,21 +1,40 @@
 // src/components/profile/AdminProfile.tsx
+
+import { useState, useEffect } from 'react';
 import { CogIcon, EnvelopeIcon, UserCircleIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { useUser } from '../../hooks/useUser';
-import { outageDetailsMock } from '../../mocks/dataMocks';
+import usersService from '../../services/users.service';
+import outagesService from '../../services/outages.service';
 
-interface AdminStats {
-  totalUsers: number;
-  activeOutages: number;
-}
+
 
 export default function AdminProfile() {
-  const { user } = useUser('admin');
+  const { user } = useUser();
+  const [totalUsers, setTotalUsers] = useState<number>(0);
+  const [activeOutages, setActiveOutages] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const adminStats: AdminStats = {
-    totalUsers: 42, // Você pode substituir por um valor dinâmico depois
-    activeOutages: outageDetailsMock.filter(o => o.status === 'approved').length
-  };
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // Busca usuários da empresa do admin
+        const users = await usersService.getUsers(user.companyId);
+        setTotalUsers(users.length);
+        // Busca outages aprovadas
+        const outages = await outagesService.getOutages({ status: 'approved' });
+        setActiveOutages(outages.length);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erro ao carregar estatísticas');
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (user?.companyId) fetchStats();
+  }, [user?.companyId]);
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
@@ -68,11 +87,11 @@ export default function AdminProfile() {
             <div className="mt-4 space-y-4">
               <div className="p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium">Total Users</h4>
-                <p className="text-2xl font-bold mt-2">{adminStats.totalUsers}</p>
+                <p className="text-2xl font-bold mt-2">{loading ? 'Carregando...' : error ? error : totalUsers}</p>
               </div>
               <div className="p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium">Active Outages</h4>
-                <p className="text-2xl font-bold mt-2">{adminStats.activeOutages}</p>
+                <p className="text-2xl font-bold mt-2">{loading ? 'Carregando...' : error ? error : activeOutages}</p>
               </div>
             </div>
           </div>

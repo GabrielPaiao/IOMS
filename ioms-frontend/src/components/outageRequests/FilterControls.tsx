@@ -1,7 +1,7 @@
 // src/components/outageRequests/FilterControls.tsx
 import { useState, useEffect } from 'react';
 import type { Outage } from '../../types/outage';
-import { outageDetailsMock } from '../../mocks/dataMocks';
+import outagesService from '../../services/outages.service';
 
 interface FilterControlsProps {
   userRole?: 'dev' | 'key_user' | 'admin';
@@ -43,10 +43,22 @@ export default function FilterControls({
     ? ALL_SITES 
     : ALL_SITES.filter(site => userLocations.includes(site.code));
 
-  // Obtém environments únicos das outages visíveis
-  const allEnvironments = Array.from(
-    new Set(outageDetailsMock.flatMap(o => o.environment))
-  ).sort();
+
+  const [allEnvironments, setAllEnvironments] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchEnvironments = async () => {
+      try {
+        // Busca outages filtradas e extrai environments únicos
+        const outages = await outagesService.getOutages();
+        const envs = Array.from(new Set(outages.flatMap(o => o.environment))).sort();
+        setAllEnvironments(envs);
+      } catch (err) {
+        setAllEnvironments([]);
+      }
+    };
+    fetchEnvironments();
+  }, []);
 
   const handleFilterChange = (key: keyof typeof localFilters, value: string | undefined) => {
     const newFilters = { 

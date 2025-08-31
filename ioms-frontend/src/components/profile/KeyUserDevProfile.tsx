@@ -1,23 +1,39 @@
 // src/components/profile/KeyUserDevProfile.tsx
+
+import { useState, useEffect } from 'react';
 import { CogIcon, EnvelopeIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import { useUser } from '../../hooks/useUser';
-import { mockApplications } from '../../mocks/dataMocks';
+import applicationsService from '../../services/applications.service';
+
 
 
 export default function KeyUserDevProfile() {
-  const { user } = useUser('key_user');
-  
-  // Filtrar aplicações atribuídas ao usuário
-  const assignedApplications = mockApplications
-    .filter(app => 
-      app.locations.some(loc => 
-        loc.keyUsers?.some(ku => ku.id === user.id)
-      )
-    )
-    .map(app => ({
-      id: app.id,
-      name: app.name
-    }));
+  const { user } = useUser();
+  const [assignedApplications, setAssignedApplications] = useState<{ id: string; name: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchApplications = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // Busca todas as aplicações e filtra as atribuídas ao usuário logado
+        const apps = await applicationsService.getApplications();
+        const assigned = apps.filter(app =>
+          app.createdByUser?.id === user.id ||
+          (user.assignedApplications?.some((a: { id: string; name: string }) => a.id === app.id))
+        );
+        setAssignedApplications(assigned.map(app => ({ id: app.id, name: app.name })));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erro ao carregar aplicações atribuídas');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchApplications();
+  }, [user?.id]);
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
@@ -59,11 +75,19 @@ export default function KeyUserDevProfile() {
           <div>
             <h3 className="text-lg font-medium text-gray-800">Assigned Applications</h3>
             <div className="mt-4 space-y-2">
-              {assignedApplications.map(app => (
-                <div key={app.id} className="flex items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="font-medium">{app.name}</span>
-                </div>
-              ))}
+              {loading ? (
+                <div className="text-gray-500">Carregando...</div>
+              ) : error ? (
+                <div className="text-red-500">{error}</div>
+              ) : assignedApplications.length === 0 ? (
+                <div className="text-gray-500">Nenhuma aplicação atribuída.</div>
+              ) : (
+                assignedApplications.map(app => (
+                  <div key={app.id} className="flex items-center p-3 bg-gray-50 rounded-lg">
+                    <span className="font-medium">{app.name}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

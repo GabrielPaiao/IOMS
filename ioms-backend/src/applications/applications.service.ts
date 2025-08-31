@@ -8,7 +8,7 @@ export class ApplicationsService {
   constructor(private prisma: PrismaService) {}
 
   async create(createApplicationDto: CreateApplicationDto, userId: string) {
-    const { environments, locations, ...data } = createApplicationDto;
+    const { environments, locations, keyUsers, ...data } = createApplicationDto;
 
     // Verificar se a empresa existe
     const company = await this.prisma.company.findUnique({
@@ -19,7 +19,25 @@ export class ApplicationsService {
       throw new BadRequestException('Company not found');
     }
 
-    // Criar aplicação com ambientes e localizações
+    // Converter emails para IDs de usuário (se keyUsers for fornecido)
+    let keyUserIds: string[] = [];
+    if (keyUsers && keyUsers.length > 0) {
+      for (const keyUser of keyUsers) {
+        // Se contém @, é um email, senão é um ID
+        if (keyUser.includes('@')) {
+          const user = await this.prisma.user.findUnique({
+            where: { email: keyUser },
+          });
+          if (user) {
+            keyUserIds.push(user.id);
+          }
+        } else {
+          keyUserIds.push(keyUser);
+        }
+      }
+    }
+
+    // Criar aplicação com ambientes, localizações
     const application = await this.prisma.application.create({
       data: {
         ...data,
@@ -31,6 +49,21 @@ export class ApplicationsService {
           create: locations.map(loc => ({ code: loc, name: loc })),
         },
       },
+    });
+
+    // Adicionar key users separadamente se fornecidos
+    if (keyUserIds.length > 0) {
+      for (const keyUserId of keyUserIds) {
+        await this.prisma.$queryRaw`
+          INSERT INTO application_key_users (id, "applicationId", "userId") 
+          VALUES (gen_random_uuid(), ${application.id}, ${keyUserId})
+        `;
+      }
+    }
+
+    // Retornar aplicação com todos os relacionamentos
+    const fullApplication = await this.prisma.application.findUnique({
+      where: { id: application.id },
       include: {
         environments: true,
         locations: true,
@@ -41,7 +74,23 @@ export class ApplicationsService {
       },
     });
 
-    return application;
+    // Buscar key users separadamente
+    const keyUsersData = await this.prisma.$queryRaw`
+      SELECT 
+        aku.id as keyuser_id,
+        u.id as user_id, 
+        u."firstName" as first_name, 
+        u."lastName" as last_name, 
+        u.email 
+      FROM application_key_users aku
+      INNER JOIN users u ON aku."userId" = u.id
+      WHERE aku."applicationId" = ${application.id}
+    `;
+
+    return {
+      ...fullApplication,
+      keyUsers: keyUsersData as any[]
+    };
   }
 
   async findAll(companyId?: string, filters?: any) {
@@ -120,12 +169,28 @@ export class ApplicationsService {
       throw new NotFoundException('Application not found');
     }
 
-    return application;
+    // Buscar key users separadamente
+    const keyUsersData = await this.prisma.$queryRaw`
+      SELECT 
+        aku.id as keyuser_id,
+        u.id as user_id, 
+        u."firstName" as first_name, 
+        u."lastName" as last_name, 
+        u.email 
+      FROM application_key_users aku
+      INNER JOIN users u ON aku."userId" = u.id
+      WHERE aku."applicationId" = ${id}
+    `;
+
+    return {
+      ...application,
+      keyUsers: keyUsersData as any[]
+    };
   }
 
   async update(id: string, updateApplicationDto: UpdateApplicationDto, userId: string) {
     const application = await this.findOne(id);
-    const { environments, locations, ...data } = updateApplicationDto;
+    const { environments, locations, keyUsers, ...data } = updateApplicationDto;
 
     // Atualizar aplicação
     const updatedApplication = await this.prisma.application.update({
@@ -178,6 +243,40 @@ export class ApplicationsService {
       });
     }
 
+    // Atualizar key users se fornecidos
+    if (keyUsers !== undefined) {
+      // Remover key users existentes
+      await this.prisma.$queryRaw`DELETE FROM application_key_users WHERE "applicationId" = ${id}`;
+
+      // Converter emails para IDs de usuário se necessário
+      let keyUserIds: string[] = [];
+      if (keyUsers.length > 0) {
+        for (const keyUser of keyUsers) {
+          // Se contém @, é um email, senão é um ID
+          if (keyUser.includes('@')) {
+            const user = await this.prisma.user.findUnique({
+              where: { email: keyUser },
+            });
+            if (user) {
+              keyUserIds.push(user.id);
+            }
+          } else {
+            keyUserIds.push(keyUser);
+          }
+        }
+      }
+
+      // Criar novos key users usando raw SQL se necessário
+      if (keyUserIds.length > 0) {
+        for (const userId of keyUserIds) {
+          await this.prisma.$queryRaw`
+            INSERT INTO application_key_users (id, "applicationId", "userId") 
+            VALUES (gen_random_uuid(), ${id}, ${userId})
+          `;
+        }
+      }
+    }
+
     // Retornar aplicação atualizada
     return this.findOne(id);
   }
@@ -204,6 +303,9 @@ export class ApplicationsService {
     await this.prisma.applicationLocation.deleteMany({
       where: { applicationId: id },
     });
+
+    // Remover key users
+    await this.prisma.$queryRaw`DELETE FROM application_key_users WHERE "applicationId" = ${id}`;
 
     // Remover aplicação
     await this.prisma.application.delete({

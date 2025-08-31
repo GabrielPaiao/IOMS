@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { mockApplications } from '../mocks/dataMocks';
 import type { Application } from '../types/outage';
+import applicationsService from '../services/applications.service';
 
 type EditMode = 'environments' | 'locations' | 'keyUsers';
 
@@ -18,15 +18,31 @@ export default function EditSectionPage() {
   useEffect(() => {
     const loadApplication = async () => {
       if (!id) return;
-
       try {
         setIsLoading(true);
         setError(null);
-
-        // Por enquanto, usar mock data
-        const app = mockApplications.find(app => app.id === id);
+        const app = await applicationsService.getApplicationById(id);
         if (app) {
-          setApplication(app);
+          setApplication({
+            id: app.id ?? '',
+            name: app.name ?? '',
+            description: app.description ?? '',
+            // vitality removido pois não existe no tipo retornado pelo service
+            environments: Array.isArray(app.environments)
+              ? app.environments.map((env: any) => typeof env === 'string' ? env : (env.environment ?? ''))
+              : [],
+            locations: Array.isArray(app.locations)
+              ? app.locations.map((loc: any) => ({
+                  code: loc.code ?? '',
+                  keyUsers: Array.isArray(loc.keyUsers) ? loc.keyUsers : [],
+                  description: loc.description ?? '',
+                }))
+              : [],
+            createdAt: app.createdAt ?? '',
+            createdBy: 'createdBy' in app ? (typeof app.createdBy === 'string' ? app.createdBy : '') : '',
+            companyId: app.companyId ?? '',
+            outages: 'outages' in app && Array.isArray(app.outages) ? app.outages : [],
+          });
         } else {
           setError('Application not found');
         }
@@ -37,7 +53,6 @@ export default function EditSectionPage() {
         setIsLoading(false);
       }
     };
-
     loadApplication();
   }, [id]);
 
@@ -45,28 +60,34 @@ export default function EditSectionPage() {
     if (!application) return;
 
     try {
-      // Por enquanto, apenas atualizar estado local
-      // TODO: Implementar chamada para API real
-      const updatedApp = { ...application };
-      
+      let updateData: any = {};
       if (type === 'environments') {
-        updatedApp.environments = items;
+        updateData.environments = items;
       } else if (type === 'locations') {
-        updatedApp.locations = items.map(loc => ({ 
-          code: loc as any, 
-          keyUsers: [],
-          description: '' 
-        }));
+        updateData.locations = items; // Enviar apenas array de códigos
       }
-      
-      setApplication(updatedApp);
-      
-      // Feedback visual
+      const savedApp = await applicationsService.updateApplication(application.id, updateData);
+      setApplication({
+        id: savedApp.id ?? application.id,
+        name: savedApp.name ?? application.name,
+        description: savedApp.description ?? application.description ?? '',
+  // vitality removido pois não existe no tipo retornado pelo service
+        environments: Array.isArray(savedApp.environments)
+          ? savedApp.environments.map((env: any) => typeof env === 'string' ? env : (env.environment ?? ''))
+          : [],
+        locations: Array.isArray(savedApp.locations)
+          ? savedApp.locations.map((loc: any) => ({
+              code: loc.code ?? '',
+              keyUsers: Array.isArray(loc.keyUsers) ? loc.keyUsers : [],
+              description: loc.description ?? '',
+            }))
+          : [],
+        createdAt: savedApp.createdAt ?? application.createdAt ?? '',
+        createdBy: 'createdBy' in savedApp ? (typeof savedApp.createdBy === 'string' ? savedApp.createdBy : (application.createdBy ?? '')) : (application.createdBy ?? ''),
+        companyId: savedApp.companyId ?? application.companyId ?? '',
+        outages: 'outages' in savedApp && Array.isArray(savedApp.outages) ? savedApp.outages : (application.outages ?? []),
+      });
       alert(`${type} updated successfully!`);
-      
-      // TODO: Salvar na API
-      console.log('Saving to API:', type, items);
-      
     } catch (err) {
       alert(`Error updating ${type}: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }

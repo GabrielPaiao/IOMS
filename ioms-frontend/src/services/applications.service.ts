@@ -30,8 +30,7 @@ export interface CreateApplicationRequest {
   environments: string[];
   locations: string[];
   version?: string;
-  technology?: string;
-  owner?: string;
+  keyUsers?: string[];
 }
 
 export interface UpdateApplicationRequest extends Partial<CreateApplicationRequest> {}

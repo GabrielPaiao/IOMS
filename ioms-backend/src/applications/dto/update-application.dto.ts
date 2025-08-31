@@ -1,13 +1,12 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateApplicationDto } from './create-application.dto';
-import { IsOptional, IsArray, IsEnum, IsString } from 'class-validator';
-import { Environment } from '@prisma/client';
+import { IsOptional, IsArray, IsString } from 'class-validator';
 
 export class UpdateApplicationDto extends PartialType(CreateApplicationDto) {
   @IsOptional()
   @IsArray()
-  @IsEnum(Environment, { each: true })
-  environments?: Environment[];
+  @IsString({ each: true })
+  environments?: string[];
 
   @IsOptional()
   @IsArray()

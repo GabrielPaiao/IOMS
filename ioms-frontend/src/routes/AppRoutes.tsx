@@ -17,6 +17,8 @@ import ApplicationDetailsPage from "../pages/ApplicationDetailsPage";
 import EditSectionPage from "../pages/EditSectionPage";
 import InviteUserPage from "../pages/InviteUserPage";
 import RegisterPage from "../pages/RegisterPage";
+import NewApplicationPage from "../pages/NewApplicationPage";
+import EditApplicationPage from "../pages/EditApplicationPage";
 
 function LayoutWithNavbar({ children }: { children: React.ReactNode }) {
   return (
@@ -103,10 +105,26 @@ export function AppRoutes() {
           </ProtectedRoute>
         } />
         
+        <Route path="/applications/new" element={
+          <ProtectedRoute requiredRole="ADMIN">
+            <LayoutWithNavbar>
+              <NewApplicationPage />
+            </LayoutWithNavbar>
+          </ProtectedRoute>
+        } />
+        
         <Route path="/applications/:id" element={
           <ProtectedRoute>
             <LayoutWithNavbar>
               <ApplicationDetailsPage />
+            </LayoutWithNavbar>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/applications/:id/edit" element={
+          <ProtectedRoute>
+            <LayoutWithNavbar>
+              <EditApplicationPage />
             </LayoutWithNavbar>
           </ProtectedRoute>
         } />

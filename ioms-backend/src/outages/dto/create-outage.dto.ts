@@ -1,6 +1,6 @@
 // src/outages/dto/create-outage.dto.ts
 import { IsString, IsEnum, IsUUID, IsDateString, IsOptional, IsBoolean } from 'class-validator';
-import { CriticalityLevel, Environment } from '@prisma/client';
+import { CriticalityLevel } from '@prisma/client';
 import { IsValidEnvironment } from '../../shared/validators/environment.validator';
 
 export class CreateOutageDto {
@@ -31,6 +31,5 @@ export class CreateOutageDto {
   planned?: boolean;
 
   @IsValidEnvironment()
-  @IsEnum(Environment, { each: true })
-  environments: Environment[];
+  environments: string[];
 }

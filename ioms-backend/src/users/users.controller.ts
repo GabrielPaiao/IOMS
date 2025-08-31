@@ -43,4 +43,13 @@ export class UsersController {
     }
     return this.usersService.getCompanyUsers(req.user.companyId);
   }
+
+  @Get('me/applications')
+  @UseGuards(JwtAuthGuard)
+  async getMyApplications(@Req() req: Request) {
+    if (!req.user) {
+      throw new Error('User not authenticated');
+    }
+    return this.usersService.getMyApplications(req.user.id);
+  }
 }
