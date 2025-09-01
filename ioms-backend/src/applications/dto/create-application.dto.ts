@@ -1,5 +1,4 @@
-import { IsString, IsArray, IsOptional, IsEnum } from 'class-validator';
-import { Environment } from '@prisma/client';
+import { IsString, IsArray, IsOptional } from 'class-validator';
 
 export class CreateApplicationDto {
   @IsString()
@@ -12,8 +11,8 @@ export class CreateApplicationDto {
   companyId: string;
 
   @IsArray()
-  @IsEnum(Environment, { each: true })
-  environments: Environment[];
+  @IsString({ each: true })
+  environments: string[];
 
   @IsArray()
   @IsString({ each: true })
@@ -24,10 +23,7 @@ export class CreateApplicationDto {
   version?: string;
 
   @IsOptional()
-  @IsString()
-  technology?: string;
-
-  @IsOptional()
-  @IsString()
-  owner?: string;
+  @IsArray()
+  @IsString({ each: true })
+  keyUsers?: string[];
 }

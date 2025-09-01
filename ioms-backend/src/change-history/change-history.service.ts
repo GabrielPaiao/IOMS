@@ -33,7 +33,7 @@ export class ChangeHistoryService {
     }
 
     if (filters.changeType) {
-      where.changeType = { in: filters.changeType };
+      where.changeType = filters.changeType.length === 1 ? filters.changeType[0] : { in: filters.changeType };
     }
 
     if (filters.changedBy) {
@@ -47,6 +47,9 @@ export class ChangeHistoryService {
       };
     }
 
+    const page = filters.page || 1;
+    const limit = filters.limit || 10;
+
     const [changes, total] = await Promise.all([
       this.prisma.outageHistory.findMany({
         where,
@@ -59,8 +62,8 @@ export class ChangeHistoryService {
           }
         },
         orderBy: { createdAt: 'desc' },
-        skip: (filters.page - 1) * filters.limit,
-        take: filters.limit
+        skip: (page - 1) * limit,
+        take: limit
       }),
       this.prisma.outageHistory.count({ where })
     ]);
@@ -68,8 +71,8 @@ export class ChangeHistoryService {
     return {
       changes,
       total,
-      page: filters.page,
-      limit: filters.limit
+      page,
+      limit
     };
   }
 
@@ -123,7 +126,7 @@ export class ChangeHistoryService {
         return {
           field: item.field,
           changeCount: item._count.field,
-          lastChange: item._max.createdAt.toISOString(),
+          lastChange: item._max.createdAt?.toISOString() || null,
           lastChangedBy: `${lastChange?.user.firstName} ${lastChange?.user.lastName}`,
           mostCommonValue: mostCommonValue[0]?.newValue || null
         };
@@ -157,26 +160,49 @@ export class ChangeHistoryService {
   }
 
   async getUserChangeHistory(userId: string, filters: Omit<ChangeHistoryFiltersDto, 'changedBy'>) {
-    const where = { ...filters, userId };
+    const whereClause: any = { userId };
+    
+    if (filters.outageId) {
+      whereClause.outageId = filters.outageId;
+    }
+
+    if (filters.field) {
+      whereClause.field = filters.field;
+    }
+
+    if (filters.changeType) {
+      whereClause.changeType = filters.changeType.length === 1 ? filters.changeType[0] : { in: filters.changeType };
+    }
+
+    if (filters.dateRange) {
+      whereClause.createdAt = {
+        gte: new Date(filters.dateRange.start),
+        lte: new Date(filters.dateRange.end)
+      };
+    }
+
+    const page = filters.page || 1;
+    const limit = filters.limit || 10;
 
     const [changes, total] = await Promise.all([
       this.prisma.outageHistory.findMany({
-        where,
+        where: whereClause,
         include: {
           outage: {
             select: { id: true, title: true, application: { select: { name: true } } }
           }
         },
         orderBy: { createdAt: 'desc' },
-        skip: (filters.page - 1) * filters.limit,
-        take: filters.limit
+        skip: (page - 1) * limit,
+        take: limit
       }),
-      this.prisma.outageHistory.count({ where })
+      this.prisma.outageHistory.count({ where: whereClause })
     ]);
 
     const outagesAffected = [...new Set(changes.map(c => c.outageId))].length;
     const fieldCounts = changes.reduce((acc, change) => {
-      acc[change.field] = (acc[change.field] || 0) + 1;
+      const field = change.field || 'unknown';
+      acc[field] = (acc[field] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
@@ -197,25 +223,48 @@ export class ChangeHistoryService {
   }
 
   async getFieldChangeHistory(field: string, filters: Omit<ChangeHistoryFiltersDto, 'field'>) {
-    const where = { ...filters, field };
+    const whereClause: any = { field };
+    
+    if (filters.outageId) {
+      whereClause.outageId = filters.outageId;
+    }
+
+    if (filters.changeType) {
+      whereClause.changeType = filters.changeType.length === 1 ? filters.changeType[0] : { in: filters.changeType };
+    }
+
+    if (filters.changedBy) {
+      whereClause.userId = filters.changedBy;
+    }
+
+    if (filters.dateRange) {
+      whereClause.createdAt = {
+        gte: new Date(filters.dateRange.start),
+        lte: new Date(filters.dateRange.end)
+      };
+    }
+
+    const page = filters.page || 1;
+    const limit = filters.limit || 10;
 
     const [changes, total] = await Promise.all([
       this.prisma.outageHistory.findMany({
-        where,
+        where: whereClause,
         include: {
           user: { select: { firstName: true, lastName: true } },
           outage: { select: { id: true, title: true } }
         },
         orderBy: { createdAt: 'desc' },
-        skip: (filters.page - 1) * filters.limit,
-        take: filters.limit
+        skip: (page - 1) * limit,
+        take: limit
       }),
-      this.prisma.outageHistory.count({ where })
+      this.prisma.outageHistory.count({ where: whereClause })
     ]);
 
     const uniqueUsers = [...new Set(changes.map(c => c.userId))];
     const valueCounts = changes.reduce((acc, change) => {
-      acc[change.newValue] = (acc[change.newValue] || 0) + 1;
+      const value = change.newValue || 'null';
+      acc[value] = (acc[value] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
@@ -255,7 +304,8 @@ export class ChangeHistoryService {
         newValue: comment,
         changeType: type || 'comment',
         userId,
-        reason: 'User comment added'
+        reason: 'User comment added',
+  action: 'CREATE',
       },
       include: {
         user: {
@@ -280,7 +330,8 @@ export class ChangeHistoryService {
       data: {
         ...data,
         oldValue: data.oldValue ? JSON.stringify(data.oldValue) : null,
-        newValue: data.newValue ? JSON.stringify(data.newValue) : null
+        newValue: data.newValue ? JSON.stringify(data.newValue) : null,
+        action: 'UPDATE'
       },
       include: {
         user: {

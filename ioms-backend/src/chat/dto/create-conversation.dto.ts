@@ -1,4 +1,5 @@
-import { IsString, IsNotEmpty, IsArray, IsUUID, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray, IsOptional, IsEmail } from 'class-validator';
+import { IsCuid } from '../../shared/validators/cuid.validator';
 
 export class CreateConversationDto {
   @IsString()
@@ -10,19 +11,19 @@ export class CreateConversationDto {
   description?: string;
 
   @IsArray()
-  @IsUUID('4', { each: true })
+  @IsEmail({}, { each: true })
   @IsNotEmpty()
-  participantIds: string[];
+  participantEmails: string[];
 
   @IsString()
   @IsOptional()
   type?: 'direct' | 'group' | 'outage' | 'application';
 
-  @IsUUID()
+  @IsCuid()
   @IsOptional()
   relatedOutageId?: string;
 
-  @IsUUID()
+  @IsCuid()
   @IsOptional()
   relatedApplicationId?: string;
 }

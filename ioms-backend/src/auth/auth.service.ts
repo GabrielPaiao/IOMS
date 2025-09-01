@@ -56,10 +56,10 @@ export class AuthService {
     };
     
     return {
-      access_token: this.jwtService.sign(payload, {
+      accessToken: this.jwtService.sign(payload, {
         expiresIn: this.configService.get('JWT_EXPIRES_IN', '1h'),
       }),
-      refresh_token: this.jwtService.sign(
+      refreshToken: this.jwtService.sign(
         { sub: user.id },
         {
           expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN', '7d'),
@@ -79,44 +79,48 @@ export class AuthService {
 
   async registerAdmin(dto: RegisterAdminDto) {
     const hashedPassword = await bcrypt.hash(dto.password, this.SALT_ROUNDS);
-    
-    return this.prisma.$transaction(async (tx) => {
-      // Verifica se email já existe
-      const existingUser = await tx.user.findUnique({
-        where: { email: dto.email },
-      });
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        // Verifica se email já existe
+        const existingUser = await tx.user.findUnique({
+          where: { email: dto.email },
+        });
 
-      if (existingUser) {
-        throw new ConflictException('Email already in use');
-      }
-
-      // Cria company apenas com o nome
-      const company = await tx.company.create({
-        data: { 
-          name: dto.companyName
-        },
-      });
-
-      return tx.user.create({
-        data: {
-          email: dto.email,
-          password: hashedPassword,
-          firstName: dto.firstName,
-          lastName: dto.lastName,
-          role: UserRole.ADMIN,
-          companyId: company.id,
-          isActive: true,
-        },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          role: true,
-          companyId: true,
+        if (existingUser) {
+          throw new ConflictException('Email already in use');
         }
+
+        // Cria company apenas com o nome
+        const company = await tx.company.create({
+          data: { 
+            name: dto.companyName
+          },
+        });
+
+        return tx.user.create({
+          data: {
+            email: dto.email,
+            password: hashedPassword,
+            firstName: dto.firstName,
+            lastName: dto.lastName,
+            role: UserRole.ADMIN,
+            companyId: company.id,
+            isActive: true,
+          },
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            companyId: true,
+          }
+        });
       });
-    });
+    } catch (error) {
+      console.log('Erro ao registrar admin:', error);
+      throw error;
+    }
   }
 
   async refreshToken(refreshToken: string) {
@@ -141,7 +145,7 @@ export class AuthService {
         throw new UnauthorizedException('User not found');
       }
 
-      return this.login(user);
+  return this.login(user);
     } catch (e) {
       throw new UnauthorizedException('Invalid refresh token');
     }

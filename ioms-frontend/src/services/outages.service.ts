@@ -8,8 +8,9 @@ export interface CreateOutageRequest {
   scheduledEnd: string;
   criticality: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   reason: string;
-  estimatedDuration: number;
   description?: string;
+  environments: string[];
+  locationIds: string[];
 }
 
 export interface UpdateOutageRequest {
@@ -36,10 +37,30 @@ class OutagesService {
   // Criar nova outage
   async createOutage(data: CreateOutageRequest): Promise<Outage> {
     try {
-      const response = await api.post('/outages', data);
+      // Usar a primeira localização selecionada
+      if (!data.locationIds.length) {
+        throw new Error('Nenhuma localização selecionada');
+      }
+
+      // Mapear dados do frontend para o formato esperado pelo backend
+      const backendData = {
+        title: String(data.reason),
+        start: String(new Date(data.scheduledStart).toISOString()),
+        end: String(new Date(data.scheduledEnd).toISOString()),
+        applicationId: String(data.applicationId),
+        criticality: String(data.criticality),
+        locationId: String(data.locationIds[0]), // Usar a primeira localização selecionada
+        environments: data.environments.map(env => String(env)),
+        planned: true // Outage planejada por padrão
+      };
+
+      const response = await api.post('/outages', backendData);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating outage:', error);
+      console.error('Error details:', error.response?.data);
+      console.error('Error messages:', error.response?.data?.message);
+      console.error('Request data:', error.response?.config?.data);
       throw error;
     }
   }
@@ -246,7 +267,7 @@ class OutagesService {
   }
 
   // Enviar notificações (placeholder para integração futura)
-  private async sendOutageNotifications(outageId: string, action: string): Promise<void> {
+  async sendOutageNotifications(outageId: string, action: string): Promise<void> {
     try {
       // TODO: Implementar integração com serviço de notificações
       console.log(`Notification sent for outage ${outageId}: ${action}`);

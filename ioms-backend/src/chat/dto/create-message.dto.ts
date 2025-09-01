@@ -1,11 +1,12 @@
-import { IsString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsCuid } from '../../shared/validators/cuid.validator';
 
 export class CreateMessageDto {
   @IsString()
   @IsNotEmpty()
   content: string;
 
-  @IsUUID()
+  @IsCuid()
   @IsNotEmpty()
   conversationId: string;
 

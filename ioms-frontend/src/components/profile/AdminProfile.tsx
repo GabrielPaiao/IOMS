@@ -1,20 +1,22 @@
 // src/components/profile/AdminProfile.tsx
-import { CogIcon, EnvelopeIcon, UserCircleIcon, PlusIcon } from '@heroicons/react/24/outline';
+
+import { CogIcon, EnvelopeIcon, UserCircleIcon, PlusIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { useUser } from '../../hooks/useUser';
-import { outageDetailsMock } from '../../mocks/dataMocks';
+import { useAuth } from '../../context/AuthContext';
 
-interface AdminStats {
-  totalUsers: number;
-  activeOutages: number;
-}
+
 
 export default function AdminProfile() {
-  const { user } = useUser('admin');
+  const { user } = useUser();
+  const { logout } = useAuth();
 
-  const adminStats: AdminStats = {
-    totalUsers: 42, // Você pode substituir por um valor dinâmico depois
-    activeOutages: outageDetailsMock.filter(o => o.status === 'approved').length
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error('Erro no logout:', err);
+    }
   };
 
   return (
@@ -33,6 +35,13 @@ export default function AdminProfile() {
             <CogIcon className="h-5 w-5 mr-1" />
             Edit Profile
           </button>
+          <button
+            onClick={handleLogout}
+            className="flex items-center text-red-600 hover:text-red-800"
+          >
+            <ArrowLeftOnRectangleIcon className="h-5 w-5 mr-1" />
+            Logout
+          </button>
         </div>
       </div>
 
@@ -40,8 +49,8 @@ export default function AdminProfile() {
         <div className="md:col-span-1">
           <div className="flex flex-col items-center">
             <UserCircleIcon className="h-24 w-24 text-gray-400" />
-            <h2 className="mt-4 text-xl font-semibold">{user.name}</h2>
-            <p className="text-gray-500 capitalize">{user.role}</p>
+            <h2 className="mt-4 text-xl font-semibold">{user?.lastName}, {user?.firstName}</h2>
+            <p className="text-gray-500 capitalize">{user?.role}</p>
           </div>
         </div>
 
@@ -51,28 +60,14 @@ export default function AdminProfile() {
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-500">Name</label>
-                <p className="mt-1 text-gray-800">{user.name}</p>
+                <p className="mt-1 text-gray-800">{user?.lastName}, {user?.firstName}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-500">Email</label>
                 <div className="mt-1 flex items-center">
                   <EnvelopeIcon className="h-5 w-5 text-gray-400 mr-2" />
-                  <p className="text-gray-800">{user.email}</p>
+                  <p className="text-gray-800">{user?.email}</p>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-medium text-gray-800">Company Information</h3>
-            <div className="mt-4 space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium">Total Users</h4>
-                <p className="text-2xl font-bold mt-2">{adminStats.totalUsers}</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium">Active Outages</h4>
-                <p className="text-2xl font-bold mt-2">{adminStats.activeOutages}</p>
               </div>
             </div>
           </div>

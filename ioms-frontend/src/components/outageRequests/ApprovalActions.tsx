@@ -1,6 +1,7 @@
 // src/components/outageRequests/ApprovalActions.tsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { useOutagesAdvanced } from '../../hooks/useOutagesAdvanced';
 import type { Outage } from '../../types/outage';
 
@@ -16,11 +17,33 @@ export default function ApprovalActions({
   onStatusChange 
 }: ApprovalActionsProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { approveOutage, rejectOutage, isLoading } = useOutagesAdvanced();
   const [showReasonDialog, setShowReasonDialog] = useState(false);
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [reason, setReason] = useState('');
   const [comments, setComments] = useState('');
+
+  // Debug log
+  console.log('ApprovalActions - User:', user?.role, 'Outage Status:', outage.status);
+
+  // Verificar se o usuário tem permissão para aprovar
+  const canApprove = () => {
+    if (!user) return false;
+    
+    // Verificar se o usuário é o criador da outage (usando requesterId ou createdBy)
+    const isCreator = (outage as any).createdBy === user.id || 
+                     (outage as any).requesterId === user.id ||
+                     outage.requesterId === user.id;
+    
+    if (isCreator) return false;
+    
+    // Normalizar o role para comparação
+    const userRole = user.role?.toUpperCase() || '';
+    
+    // Apenas KEY_USER e ADMIN podem aprovar
+    return ['KEY_USER', 'ADMIN'].includes(userRole);
+  };
 
   const handleAction = (actionType: 'approve' | 'reject') => {
     setAction(actionType);
@@ -66,14 +89,52 @@ export default function ApprovalActions({
   };
 
   // Verifica se está pendente
-  if (outage.status !== 'pending') {
+  const isPending = outage.status?.toLowerCase() === 'pending';
+  
+  if (!isPending) {
     return (
       <div className="pt-6 mt-6 border-t">
         <p className="text-gray-500 text-sm">
-          {outage.status === 'approved' ? '✓ Already approved' : 
-           outage.status === 'rejected' ? '✗ Already rejected' : 
-           'No pending actions'}
+          {outage.status?.toLowerCase() === 'approved' ? '✓ Already approved' : 
+           outage.status?.toLowerCase() === 'rejected' ? '✗ Already rejected' : 
+           `Status: ${outage.status} - No pending actions`}
         </p>
+      </div>
+    );
+  }
+
+  // Verificar se o usuário tem permissão para aprovar
+  if (!canApprove()) {
+    const isCreator = (outage as any).createdBy === user?.id || 
+                     (outage as any).requesterId === user?.id ||
+                     outage.requesterId === user?.id;
+    
+    return (
+      <div className="pt-6 mt-6 border-t">
+        <div className="bg-gray-50 p-4 rounded-lg">
+          {isCreator ? (
+            <div>
+              <p className="text-gray-600 text-sm">
+                <strong>🚫 Não é possível aprovar:</strong> Você não pode aprovar suas próprias solicitações de outage.
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                A aprovação deve ser feita por outro Key User da aplicação ou um Administrador.
+              </p>
+            </div>
+          ) : (
+            <div>
+              <p className="text-gray-600 text-sm">
+                <strong>Aguardando aprovação:</strong> Apenas usuários KEY_USER ou ADMIN podem aprovar solicitações de outage.
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                Seu role atual: {user?.role || 'Não definido'}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Debug - Roles permitidos: KEY_USER, ADMIN
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -81,6 +142,11 @@ export default function ApprovalActions({
   // Componente visual para outages pendentes
   return (
     <div className="space-y-4 pt-6 mt-6 border-t">
+      {/* Debug Info */}
+      <div className="bg-blue-50 p-2 rounded text-xs">
+        <strong>DEBUG:</strong> Usuário: {user?.role}, Outage Status: {outage.status}, CanApprove: {canApprove().toString()}
+      </div>
+      
       <div className="bg-yellow-50 p-3 rounded-lg">
         <h3 className="font-medium text-yellow-800">Review Details</h3>
         <ul className="mt-2 space-y-1 text-sm">

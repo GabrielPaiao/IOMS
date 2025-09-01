@@ -1,5 +1,5 @@
 import { IsOptional, IsDateString, IsEnum, IsString } from 'class-validator';
-import { Environment, CriticalityLevel } from '@prisma/client';
+import { CriticalityLevel } from '@prisma/client';
 
 export class DashboardFiltersDto {
   @IsOptional()
@@ -11,8 +11,7 @@ export class DashboardFiltersDto {
   endDate?: string;
 
   @IsOptional()
-  @IsEnum(Environment)
-  environment?: Environment;
+  environment?: string;
 
   @IsOptional()
   @IsEnum(CriticalityLevel)

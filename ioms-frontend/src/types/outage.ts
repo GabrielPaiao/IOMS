@@ -2,7 +2,7 @@
 
 // Tipos Básicos
 export type UserRole = 'dev' | 'key_user' | 'admin';
-export type CriticalityLevel = '1 (highest)' | '2' | '3' | '4' | '5 (lowest)';
+export type CriticalityLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type Environment = string;
 export type LocationCode = 'GUA' | 'SJC' | 'OTHER';
 
@@ -16,11 +16,13 @@ export interface Application {
   id: string;
   name: string;
   description: string;
-  vitality: ApplicationVitality;
+  vitality?: ApplicationVitality;
   environments: Environment[];
   locations: ApplicationLocation[];
   createdAt: string;
   createdBy: string;
+  companyId: string;
+  outages?: Outage[];
 }
 
 export interface ApplicationLocation {
@@ -150,6 +152,9 @@ export interface User {
   role: UserRole;
   companyId?: string;
   locations: LocationCode[];
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
   assignedApplications?: Array<{
     id: string;
     name: string;

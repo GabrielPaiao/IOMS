@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import axios, { type AxiosInstance, type AxiosResponse, type AxiosError } from 'axios';
 import { config } from '../../config';
 
 // Criar instância do axios
@@ -11,15 +11,16 @@ const api: AxiosInstance = axios.create({
 });
 
 // Interceptor para adicionar token de autenticação
+import { config as appConfig } from '../../config';
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem(config.TOKEN_STORAGE_KEY);
+  (config: any) => {
+    const token = localStorage.getItem(appConfig.TOKEN_STORAGE_KEY);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
+  (error: any) => {
     return Promise.reject(error);
   }
 );
@@ -68,4 +69,5 @@ api.interceptors.response.use(
   }
 );
 
+export { api };
 export default api; 

@@ -2,20 +2,18 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useOutagesAdvanced } from '../hooks/useOutagesAdvanced';
+import applicationsService from '../services/applications.service';
 import { 
   ArrowLeft, 
-  Edit, 
+  PencilSimple as Edit, 
   Trash, 
   Plus, 
   Calendar, 
   MapPin, 
-  Server, 
-  User, 
+  Desktop as Server, 
   Clock,
-  Warning,
-  CheckCircle,
-  XCircle,
-  ClockCounterClockwise
+  ClockCounterClockwise,
+  Users
 } from '@phosphor-icons/react';
 
 export default function ApplicationDetailsPage() {
@@ -23,19 +21,24 @@ export default function ApplicationDetailsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { 
-    getApplicationById, 
-    getOutageById,
+    getApplicationById,
     isLoading, 
     error,
     clearError 
   } = useOutagesAdvanced();
+  
+  // Verificar se usuário é ADMIN
+  const isAdmin = () => {
+    return user?.role?.toUpperCase() === 'ADMIN';
+  };
 
   const [application, setApplication] = useState<any>(null);
   const [recentOutages, setRecentOutages] = useState<any[]>([]);
   const [isLoadingApp, setIsLoadingApp] = useState(false);
 
+
   useEffect(() => {
-    if (id) {
+    if (id && id !== 'new') {
       loadApplication();
     }
   }, [id]);
@@ -48,10 +51,9 @@ export default function ApplicationDetailsPage() {
       const appData = await getApplicationById(id);
       setApplication(appData);
       
-      // Carregar outages recentes se disponíveis
-      if (appData.outages && appData.outages.length > 0) {
-        setRecentOutages(appData.outages);
-      }
+      // TODO: Load recent outages from separate API call
+      // For now, we'll leave recent outages empty
+      setRecentOutages([]);
     } catch (err) {
       console.error('Error loading application:', err);
     } finally {
@@ -69,15 +71,17 @@ export default function ApplicationDetailsPage() {
     }
 
     try {
-      // TODO: Implementar delete da aplicação
+      await applicationsService.deleteApplication(id!);
+      alert('Aplicação excluída com sucesso!');
       navigate('/applications');
     } catch (err) {
       console.error('Error deleting application:', err);
+      alert('Erro ao excluir aplicação. Tente novamente.');
     }
   };
 
   const handleNewOutage = () => {
-    navigate('/new-outage', { 
+    navigate('/outages/new', { 
       state: { 
         applicationId: id,
         applicationName: application?.name 
@@ -190,29 +194,35 @@ export default function ApplicationDetailsPage() {
             </div>
             
             <div className="flex space-x-3">
-              <button
-                onClick={handleNewOutage}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Outage
-              </button>
+              {user?.role !== 'admin' && (
+                <button
+                  onClick={handleNewOutage}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Outage
+                </button>
+              )}
               
-              <button
-                onClick={handleEdit}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Editar
-              </button>
-              
-              <button
-                onClick={handleDelete}
-                className="px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center"
-              >
-                <Trash className="h-4 w-4 mr-2" />
-                Excluir
-              </button>
+              {isAdmin() && (
+                <>
+                  <button
+                    onClick={handleEdit}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                  </button>
+                  
+                  <button
+                    onClick={handleDelete}
+                    className="px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center"
+                  >
+                    <Trash className="h-4 w-4 mr-2" />
+                    Excluir
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -243,20 +253,6 @@ export default function ApplicationDetailsPage() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1">
-                    Tecnologia
-                  </label>
-                  <p className="text-gray-900">{application.technology || 'N/A'}</p>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">
-                    Proprietário
-                  </label>
-                  <p className="text-gray-900">{application.owner || 'N/A'}</p>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">
                     Criado em
                   </label>
                   <p className="text-gray-900">{formatDate(application.createdAt)}</p>
@@ -274,6 +270,39 @@ export default function ApplicationDetailsPage() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* Key Users */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <Users className="h-5 w-5 mr-2 text-indigo-600" />
+                Key Users
+              </h2>
+              
+              {application.keyUsers && application.keyUsers.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {application.keyUsers.map((keyUser: any) => (
+                    <div key={keyUser.keyuser_id} className="bg-indigo-50 border border-indigo-200 rounded-md p-4">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-medium">
+                          {keyUser.first_name ? keyUser.first_name[0] : keyUser.email[0].toUpperCase()}
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-indigo-900 font-medium">
+                            {keyUser.first_name && keyUser.last_name 
+                              ? `${keyUser.first_name} ${keyUser.last_name}` 
+                              : keyUser.email
+                            }
+                          </p>
+                          <p className="text-indigo-600 text-sm">{keyUser.email}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">Nenhum key user configurado</p>
+              )}
             </div>
 
             {/* Ambientes */}
@@ -382,6 +411,13 @@ export default function ApplicationDetailsPage() {
                 </div>
                 
                 <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Key Users</span>
+                  <span className="text-lg font-bold text-indigo-600">
+                    {application.keyUsers?.length || 0}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Ambientes</span>
                   <span className="text-lg font-bold text-green-600">
                     {application.environments?.length || 0}
@@ -404,21 +440,25 @@ export default function ApplicationDetailsPage() {
               </h3>
               
               <div className="space-y-3">
-                <button
-                  onClick={handleNewOutage}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nova Outage
-                </button>
+                {user?.role !== 'admin' && (
+                  <button
+                    onClick={handleNewOutage}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova Outage
+                  </button>
+                )}
                 
-                <button
-                  onClick={handleEdit}
-                  className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar Aplicação
-                </button>
+                {isAdmin() && (
+                  <button
+                    onClick={handleEdit}
+                    className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar Aplicação
+                  </button>
+                )}
                 
                 <button
                   onClick={() => navigate(`/applications/${id}/outages`)}

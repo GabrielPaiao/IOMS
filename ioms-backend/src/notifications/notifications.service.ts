@@ -213,7 +213,7 @@ export class NotificationsService {
       include: {
         application: { select: { name: true } },
         location: { select: { name: true } },
-        requester: { select: { firstName: true, lastName: true } }
+        createdByUser: { select: { firstName: true, lastName: true } }
       }
     });
 
@@ -221,7 +221,7 @@ export class NotificationsService {
       throw new NotFoundException('Outage not found');
     }
 
-    const notifications = [];
+    const notifications: any[] = [];
 
     for (const recipientId of recipients) {
       const notification = await this.createNotification({
@@ -233,9 +233,9 @@ export class NotificationsService {
         metadata: {
           outageId,
           applicationName: outage.application.name,
-          locationName: outage.location.name,
+          locationName: outage.location?.name || 'Unknown',
           criticality: outage.criticality,
-          requester: `${outage.requester.firstName} ${outage.requester.lastName}`
+          requester: `${outage.createdByUser.firstName} ${outage.createdByUser.lastName}`
         }
       });
 
@@ -250,7 +250,7 @@ export class NotificationsService {
       where: { id: outageId },
       include: {
         application: { select: { name: true } },
-        requester: { select: { id: true, firstName: true, lastName: true } }
+        createdByUser: { select: { id: true, firstName: true, lastName: true } }
       }
     });
 
@@ -259,7 +259,7 @@ export class NotificationsService {
     }
 
     const notification = await this.createNotification({
-      recipientId: outage.requester.id,
+      recipientId: outage.createdByUser.id,
       type: 'approval_update',
       title: `Outage ${action}: ${outage.reason}`,
       message: `Your outage request "${outage.reason}" for ${outage.application.name} has been ${action}`,

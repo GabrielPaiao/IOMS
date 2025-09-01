@@ -4,12 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useOutagesAdvanced } from '../hooks/useOutagesAdvanced';
 import { 
-  Calendar as CalendarIcon, 
-  ChevronLeft, 
-  ChevronRight, 
+  CaretLeft as ChevronLeft, 
+  CaretRight as ChevronRight, 
   Plus,
   Clock,
-  Warning,
   CheckCircle,
   XCircle,
   ClockCounterClockwise
@@ -19,6 +17,7 @@ import CriticalityBadge from '../components/outageRequests/CriticalityBadge';
 export default function OutageCalendarPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+
   const { 
     getCalendar,
     isLoading, 
@@ -88,21 +87,37 @@ export default function OutageCalendarPage() {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-gray-100 text-gray-800';
+    const upperStatus = status?.toUpperCase();
+    switch (upperStatus) {
+      case 'APPROVED': return 'bg-green-100 text-green-800';
+      case 'REJECTED': return 'bg-red-100 text-red-800';
+      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
+      case 'CANCELLED': return 'bg-gray-100 text-gray-800';
+      case 'COMPLETED': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
+  const getStatusBorderColor = (status: string) => {
+    const upperStatus = status?.toUpperCase();
+    switch (upperStatus) {
+      case 'APPROVED': return 'border-green-500 bg-green-50';
+      case 'REJECTED': return 'border-red-500 bg-red-50';
+      case 'PENDING': return 'border-yellow-500 bg-yellow-50';
+      case 'CANCELLED': return 'border-gray-500 bg-gray-50';
+      case 'COMPLETED': return 'border-blue-500 bg-blue-50';
+      default: return 'border-blue-500 bg-blue-50';
+    }
+  };
+
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'approved': return <CheckCircle className="h-3 w-3" />;
-      case 'rejected': return <XCircle className="h-3 w-3" />;
-      case 'pending': return <Clock className="h-3 w-3" />;
-      case 'cancelled': return <ClockCounterClockwise className="h-3 w-3" />;
+    const upperStatus = status?.toUpperCase();
+    switch (upperStatus) {
+      case 'APPROVED': return <CheckCircle className="h-3 w-3" />;
+      case 'REJECTED': return <XCircle className="h-3 w-3" />;
+      case 'PENDING': return <Clock className="h-3 w-3" />;
+      case 'CANCELLED': return <ClockCounterClockwise className="h-3 w-3" />;
+      case 'COMPLETED': return <CheckCircle className="h-3 w-3" />;
       default: return <Clock className="h-3 w-3" />;
     }
   };
@@ -172,13 +187,15 @@ export default function OutageCalendarPage() {
               </p>
             </div>
             
-            <button
-              onClick={() => navigate('/new-outage')}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Nova Outage
-            </button>
+            {user?.role !== 'admin' && (
+              <button
+                onClick={() => navigate('/outages/new')}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Nova Outage
+              </button>
+            )}
           </div>
         </div>
 
@@ -270,7 +287,7 @@ export default function OutageCalendarPage() {
                           e.stopPropagation();
                           handleOutageClick(outage.id);
                         }}
-                        className="text-xs p-1 rounded cursor-pointer hover:bg-gray-100 border-l-2 border-blue-500 bg-blue-50"
+                        className={`text-xs p-1 rounded cursor-pointer hover:opacity-80 border-l-2 ${getStatusBorderColor(outage.status)}`}
                       >
                         <div className="flex items-center space-x-1 mb-1">
                           <CriticalityBadge criticality={outage.criticality} />
@@ -356,25 +373,30 @@ export default function OutageCalendarPage() {
         {/* Legenda */}
         <div className="mt-6 bg-white rounded-lg shadow-sm p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Legenda</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-blue-50 border-l-2 border-blue-500 rounded"></div>
-              <span className="text-sm text-gray-600">Outage</span>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-green-100 rounded"></div>
+              <div className="w-4 h-4 bg-green-50 border-l-2 border-green-500 rounded"></div>
               <span className="text-sm text-gray-600">Aprovada</span>
             </div>
             
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-yellow-100 rounded"></div>
+              <div className="w-4 h-4 bg-yellow-50 border-l-2 border-yellow-500 rounded"></div>
               <span className="text-sm text-gray-600">Pendente</span>
             </div>
             
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-red-100 rounded"></div>
+              <div className="w-4 h-4 bg-red-50 border-l-2 border-red-500 rounded"></div>
               <span className="text-sm text-gray-600">Rejeitada</span>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-blue-50 border-l-2 border-blue-500 rounded"></div>
+              <span className="text-sm text-gray-600">Concluída</span>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-gray-50 border-l-2 border-gray-500 rounded"></div>
+              <span className="text-sm text-gray-600">Cancelada</span>
             </div>
           </div>
         </div>

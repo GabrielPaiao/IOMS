@@ -11,21 +11,35 @@ export class ChatService {
   // ===== CONVERSAS =====
 
   async createConversation(userId: string, createConversationDto: CreateConversationDto) {
-    const { participantIds, ...conversationData } = createConversationDto;
+    const { participantEmails, ...conversationData } = createConversationDto;
 
-    // Verificar se o usuário está incluído nos participantes
-    if (!participantIds.includes(userId)) {
-      participantIds.push(userId);
-    }
-
-    // Verificar se todos os usuários existem
+    // Buscar usuários pelos emails fornecidos
     const users = await this.prisma.user.findMany({
-      where: { id: { in: participantIds } },
-      select: { id: true, firstName: true, lastName: true }
+      where: { 
+        email: { 
+          in: participantEmails 
+        } 
+      },
+      select: { id: true, firstName: true, lastName: true, email: true }
     });
 
-    if (users.length !== participantIds.length) {
-      throw new NotFoundException('Um ou mais usuários não foram encontrados');
+    if (users.length !== participantEmails.length) {
+      const foundEmails = users.map(u => u.email);
+      const notFoundEmails = participantEmails.filter(email => !foundEmails.includes(email));
+      throw new NotFoundException(`Usuários não encontrados com os emails: ${notFoundEmails.join(', ')}`);
+    }
+
+    // Extrair IDs dos usuários encontrados
+    const participantIds = users.map(user => user.id);
+
+    // Verificar se o usuário atual está incluído nos participantes
+    const currentUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true }
+    });
+
+    if (currentUser && !participantEmails.includes(currentUser.email)) {
+      participantIds.push(userId);
     }
 
     // Criar a conversa
@@ -118,7 +132,19 @@ export class ChatService {
       }
     });
 
-    return conversations;
+    // Formatar dados para o frontend
+    const formattedConversations = conversations.map(conv => ({
+      ...conv,
+      lastMessage: conv.lastMessage?.content || 'Nenhuma mensagem ainda',
+      participants: conv.participants.map(p => ({
+        id: p.user.id,
+        name: `${p.user.firstName} ${p.user.lastName}`,
+        email: p.user.email,
+        role: p.role
+      }))
+    }));
+
+    return formattedConversations;
   }
 
   async getConversationById(userId: string, conversationId: string) {
@@ -283,10 +309,13 @@ export class ChatService {
       }
     });
 
-    // Atualizar a data de atualização da conversa
+    // Atualizar a conversa com a última mensagem e data de atualização
     await this.prisma.chatConversation.update({
       where: { id: conversationId },
-      data: { updatedAt: new Date() }
+      data: { 
+        lastMessageId: message.id,
+        updatedAt: new Date() 
+      }
     });
 
     return message;
@@ -386,8 +415,8 @@ export class ChatService {
   // ===== FUNCIONALIDADES ADICIONAIS =====
 
   async markConversationAsRead(userId: string, conversationId: string) {
-    // Marcar todas as mensagens não lidas como lidas
-    await this.prisma.chatMessage.updateMany({
+    // Buscar mensagens não lidas pelo usuário
+    const unreadMessages = await this.prisma.chatMessage.findMany({
       where: {
         conversationId: conversationId,
         userId: { not: userId },
@@ -397,15 +426,20 @@ export class ChatService {
           }
         }
       },
-      data: {
-        readBy: {
-          create: {
-            userId: userId,
-            readAt: new Date()
-          }
-        }
-      }
+      select: { id: true }
     });
+
+    // Marcar mensagens como lidas
+    if (unreadMessages.length > 0) {
+      await this.prisma.messageRead.createMany({
+        data: unreadMessages.map(message => ({
+          messageId: message.id,
+          userId: userId,
+          readAt: new Date()
+        })),
+        skipDuplicates: true
+      });
+    }
 
     return { message: 'Conversa marcada como lida' };
   }

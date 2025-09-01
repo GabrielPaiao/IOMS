@@ -10,7 +10,9 @@ import {
   Warning, 
   FileText, 
   CheckCircle,
-  XCircle
+  XCircle,
+  HardDrives,
+  MapPin
 } from '@phosphor-icons/react';
 
 export default function NewOutageRequestPage() {
@@ -20,7 +22,7 @@ export default function NewOutageRequestPage() {
     applications, 
     createOutage, 
     isLoading, 
-    error,
+
     loadApplications 
   } = useOutagesAdvanced();
 
@@ -30,12 +32,25 @@ export default function NewOutageRequestPage() {
     scheduledEnd: '',
     criticality: 'MEDIUM' as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
     reason: '',
-    estimatedDuration: 60,
-    description: ''
+    description: '',
+    environments: [] as string[],
+    locationIds: [] as string[]
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [selectedAppKeyUsersCount, setSelectedAppKeyUsersCount] = useState<number>(0);
+  const [showSoleKeyUserWarning, setShowSoleKeyUserWarning] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState<any>(null);
+  const [estimatedDuration, setEstimatedDuration] = useState<string>('--');
+
+  // Verificar se o usuário tem permissão para criar outages
+  useEffect(() => {
+    if (user && user.role === 'admin') {
+      navigate('/dashboard', { replace: true });
+      return;
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     if (user?.companyId) {
@@ -43,17 +58,89 @@ export default function NewOutageRequestPage() {
     }
   }, [user?.companyId, loadApplications]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
+    const updatedFormData = {
+      ...formData,
       [name]: value
-    }));
+    };
+    
+    setFormData(updatedFormData);
+
+    // Calcular duração automaticamente quando as datas mudam
+    if ((name === 'scheduledStart' || name === 'scheduledEnd') && updatedFormData.scheduledStart && updatedFormData.scheduledEnd) {
+      const startDate = new Date(updatedFormData.scheduledStart);
+      const endDate = new Date(updatedFormData.scheduledEnd);
+      
+      if (endDate > startDate) {
+        const durationMs = endDate.getTime() - startDate.getTime();
+        const durationMinutes = Math.floor(durationMs / (1000 * 60));
+        const hours = Math.floor(durationMinutes / 60);
+        const minutes = durationMinutes % 60;
+        
+        if (hours > 0) {
+          setEstimatedDuration(`${hours}h${minutes > 0 ? ` ${minutes}min` : ''}`);
+        } else {
+          setEstimatedDuration(`${minutes}min`);
+        }
+      } else {
+        setEstimatedDuration('--');
+      }
+    }
+
+    // Verificar Key Users e carregar dados da aplicação quando selecionada
+    if (name === 'applicationId' && value) {
+      try {
+        const selectedApp = applications.find(app => app.id === value) as any;
+        setSelectedApplication(selectedApp);
+        
+        if (selectedApp && selectedApp.keyUsers && user?.role?.toUpperCase() === 'KEY_USER') {
+          const keyUsersCount = selectedApp.keyUsers.length;
+          setSelectedAppKeyUsersCount(keyUsersCount);
+          
+          // Se o usuário é KEY_USER e há apenas 1 Key User na aplicação, mostrar aviso
+          if (keyUsersCount === 1) {
+            setShowSoleKeyUserWarning(true);
+          } else {
+            setShowSoleKeyUserWarning(false);
+          }
+        } else {
+          setShowSoleKeyUserWarning(false);
+          setSelectedAppKeyUsersCount(0);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar aplicação:', error);
+      }
+    } else if (name === 'applicationId' && !value) {
+      setShowSoleKeyUserWarning(false);
+      setSelectedAppKeyUsersCount(0);
+      setSelectedApplication(null);
+    }
 
     // Limpar erros de validação quando o usuário digita
     if (validationErrors.length > 0) {
       setValidationErrors([]);
     }
+  };
+
+  // Função para lidar com seleção de environments
+  const handleEnvironmentChange = (env: string) => {
+    setFormData(prev => ({
+      ...prev,
+      environments: prev.environments.includes(env)
+        ? prev.environments.filter(e => e !== env)
+        : [...prev.environments, env]
+    }));
+  };
+
+  // Função para lidar com seleção de locations
+  const handleLocationChange = (locationId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      locationIds: prev.locationIds.includes(locationId)
+        ? prev.locationIds.filter(id => id !== locationId)
+        : [...prev.locationIds, locationId]
+    }));
   };
 
   const validateForm = (): boolean => {
@@ -88,8 +175,17 @@ export default function NewOutageRequestPage() {
       errors.push('Motivo é obrigatório');
     }
 
-    if (formData.estimatedDuration <= 0) {
-      errors.push('Duração estimada deve ser maior que zero');
+    // Validação adicional para Key Users únicos
+    if (showSoleKeyUserWarning && user?.role?.toUpperCase() === 'KEY_USER') {
+      errors.push('Você é o único Key User desta aplicação. Não é possível criar uma solicitação de outage que você não poderá aprovar.');
+    }
+
+    if (!formData.environments.length) {
+      errors.push('Selecione pelo menos um ambiente');
+    }
+
+    if (!formData.locationIds.length) {
+      errors.push('Selecione pelo menos uma localização');
     }
 
     setValidationErrors(errors);
@@ -113,8 +209,7 @@ export default function NewOutageRequestPage() {
     try {
       const outageData = {
         ...formData,
-        companyId: user.companyId,
-        estimatedDuration: formData.estimatedDuration * 60 // Converter para segundos
+        companyId: user.companyId
       };
 
       await createOutage(outageData);
@@ -206,6 +301,26 @@ export default function NewOutageRequestPage() {
               </select>
             </div>
 
+            {/* Aviso para Key User único */}
+            {showSoleKeyUserWarning && (
+              <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
+                <div className="flex items-start">
+                  <Warning className="h-5 w-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" />
+                  <div>
+                    <h3 className="text-sm font-medium text-amber-800">
+                      ⚠️ Atenção: Key User Único
+                    </h3>
+                    <p className="text-sm text-amber-700 mt-1">
+                      Você é o único Key User desta aplicação. Solicitações de outage precisam ser aprovadas por outro Key User da aplicação ou um Administrador. Como você é o único, não será possível aprovar esta solicitação.
+                    </p>
+                    <p className="text-xs text-amber-600 mt-2">
+                      💡 Sugestão: Considere adicionar outro Key User à aplicação ou entre em contato com um Administrador.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Datas e Horários */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -268,23 +383,73 @@ export default function NewOutageRequestPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Clock className="inline h-4 w-4 mr-1" />
-                  Duração Estimada (minutos) *
+                  Duração Estimada (calculada automaticamente)
                 </label>
-                <input
-                  type="number"
-                  name="estimatedDuration"
-                  value={formData.estimatedDuration}
-                  onChange={handleInputChange}
-                  min="1"
-                  max="1440"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
+                <div className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-gray-700 font-mono">
+                  {estimatedDuration}
+                </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Máximo: 24 horas (1440 minutos)
+                  Calculada automaticamente com base nas datas de início e fim
                 </p>
               </div>
             </div>
+
+            {/* Ambientes */}
+            {selectedApplication && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <HardDrives className="inline h-4 w-4 mr-1" />
+                  Ambientes Afetados *
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {selectedApplication.environments?.map((env: any) => (
+                    <label key={env.environment} className="flex items-center space-x-2 p-2 border rounded-md hover:bg-gray-50">
+                      <input
+                        type="checkbox"
+                        checked={formData.environments.includes(env.environment)}
+                        onChange={() => handleEnvironmentChange(env.environment)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm">{env.environment}</span>
+                    </label>
+                  ))}
+                </div>
+                {formData.environments.length === 0 && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Selecione pelo menos um ambiente
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Localizações */}
+            {selectedApplication && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <MapPin className="inline h-4 w-4 mr-1" />
+                  Localizações Afetadas *
+                </label>
+                <div className="grid grid-cols-1 gap-2">
+                  {selectedApplication.locations?.map((location: any) => (
+                    <label key={location.id} className="flex items-center space-x-2 p-2 border rounded-md hover:bg-gray-50">
+                      <input
+                        type="checkbox"
+                        checked={formData.locationIds.includes(location.id)}
+                        onChange={() => handleLocationChange(location.id)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-medium">{location.name}</span>
+                      <span className="text-xs text-gray-500">({location.code})</span>
+                    </label>
+                  ))}
+                </div>
+                {formData.locationIds.length === 0 && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Selecione pelo menos uma localização
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Motivo */}
             <div>

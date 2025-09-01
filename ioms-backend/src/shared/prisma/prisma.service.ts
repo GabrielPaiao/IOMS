@@ -92,26 +92,7 @@ export class PrismaService
       include: {
         application: {
           select: { id: true, name: true, description: true }
-        },
-        location: true,
-        environments: true,
-        requester: {
-          select: {
-            id: true,
-            email: true,
-            role: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        approver: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
+        }
       },
       orderBy: { createdAt: 'desc' },
       take: 100,

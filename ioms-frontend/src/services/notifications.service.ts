@@ -1,5 +1,5 @@
 import api from './api';
-import type { OutageNotification, User } from '../types/outage';
+import type { OutageNotification } from '../types/outage';
 import { config } from '../../config';
 
 export interface NotificationFilters {

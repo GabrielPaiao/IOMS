@@ -1,11 +1,13 @@
 // src/hooks/useUser.ts
-import { useState } from 'react';
-import type { UserRole } from '../types/outage';
-import { authMock } from '../mocks/dataMocks';
+import { useAuth } from '../context/AuthContext';
 
-export function useUser(initialRole: UserRole = 'admin') {
-  // Mock inicial usando os dados do dataMocks
-  const [user] = useState(authMock[initialRole]);
+export function useUser() {
+  const { user: authUser } = useAuth();
 
-  return { user };
+  // Usar diretamente os dados do contexto de autenticação
+  return { 
+    user: authUser, 
+    loading: false, 
+    error: null 
+  };
 }

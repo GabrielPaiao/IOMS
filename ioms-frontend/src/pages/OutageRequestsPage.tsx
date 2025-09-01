@@ -5,8 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useOutagesAdvanced } from '../hooks/useOutagesAdvanced';
 import { 
   Plus, 
-  Filter, 
-  Search, 
+  Funnel as Filter, 
+  MagnifyingGlass as Search, 
   Calendar, 
   Clock, 
   Warning,
@@ -24,6 +24,8 @@ export default function OutageRequestsPage() {
     outages, 
     loadOutages, 
     loadPendingApproval,
+    approveOutage,
+    rejectOutage,
     isLoading, 
     error,
     clearError 
@@ -79,6 +81,33 @@ export default function OutageRequestsPage() {
     };
     setFilters(clearedFilters);
     loadOutages();
+  };
+
+  const handleApprove = async (outageId: string) => {
+    try {
+      await approveOutage(outageId, 'Aprovado via interface web');
+      // Recarregar a lista pendente
+      if (activeTab === 'pending') {
+        loadPendingApproval();
+      }
+    } catch (error) {
+      console.error('Erro ao aprovar outage:', error);
+    }
+  };
+
+  const handleReject = async (outageId: string) => {
+    const reason = prompt('Motivo da rejeição:');
+    if (reason) {
+      try {
+        await rejectOutage(outageId, reason);
+        // Recarregar a lista pendente
+        if (activeTab === 'pending') {
+          loadPendingApproval();
+        }
+      } catch (error) {
+        console.error('Erro ao rejeitar outage:', error);
+      }
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -165,13 +194,15 @@ export default function OutageRequestsPage() {
               </p>
             </div>
             
-            <button
-              onClick={() => navigate('/new-outage')}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Nova Outage
-            </button>
+            {user?.role !== 'admin' && (
+              <button
+                onClick={() => navigate('/outages/new')}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Nova Outage
+              </button>
+            )}
           </div>
         </div>
 
@@ -356,6 +387,27 @@ export default function OutageRequestsPage() {
                         <Eye className="h-4 w-4 mr-1" />
                         Ver Detalhes
                       </button>
+                      
+                      {/* Botões de aprovação apenas para Key Users e Admins na aba pending */}
+                      {activeTab === 'pending' && (user?.role === 'key_user' || user?.role === 'admin') && outage.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(outage.id)}
+                            className="px-3 py-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Aprovar
+                          </button>
+                          
+                          <button
+                            onClick={() => handleReject(outage.id)}
+                            className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center"
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Rejeitar
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -373,9 +425,9 @@ export default function OutageRequestsPage() {
                 {activeTab === 'my' && 'Você não possui outages registradas.'}
               </p>
               
-              {activeTab === 'all' && (
+              {activeTab === 'all' && user?.role !== 'admin' && (
                 <button
-                  onClick={() => navigate('/new-outage')}
+                  onClick={() => navigate('/outages/new')}
                   className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center mx-auto"
                 >
                   <Plus className="h-5 w-5 mr-2" />

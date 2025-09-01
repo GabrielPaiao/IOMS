@@ -98,13 +98,27 @@ export class DashboardService {
     });
 
     // Top aplicações com mais outages
-    const topApplications = await this.prisma.outage.groupBy({
+    const topApplicationsRaw = await this.prisma.outage.groupBy({
       by: ['applicationId'],
       where,
       _count: { id: true },
       orderBy: { _count: { id: 'desc' } },
       take: 5,
     });
+
+    // Buscar nomes das aplicações
+    const topApplications = await Promise.all(
+      topApplicationsRaw.map(async (app) => {
+        const application = await this.prisma.application.findUnique({
+          where: { id: app.applicationId },
+          select: { id: true, name: true }
+        });
+        return {
+          ...app,
+          application: application
+        };
+      })
+    );
 
     // Estatísticas de usuários
     const userStats = await this.prisma.outage.groupBy({
@@ -220,10 +234,14 @@ export class DashboardService {
     const approvalTimes = outages
       .filter(o => o.status === 'APPROVED' && o.approvalWorkflows)
       .map(o => {
-        const completedSteps = o.approvalWorkflows.filter(w => w.status === 'APPROVED').length;
-        if (completedSteps > 0) {
-          const lastStep = completedSteps[completedSteps.length - 1];
-          return new Date(lastStep.completedAt).getTime() - new Date(o.createdAt).getTime();
+        const completedWorkflows = o.approvalWorkflows.filter(w => w.status === 'APPROVED');
+        if (completedWorkflows.length > 0) {
+          const workflow = completedWorkflows[completedWorkflows.length - 1];
+          const completedSteps = workflow.steps.filter(s => s.status === 'APPROVED' && s.completedAt);
+          if (completedSteps.length > 0) {
+            const lastCompletedStep = completedSteps[completedSteps.length - 1];
+            return new Date(lastCompletedStep.completedAt!).getTime() - new Date(o.createdAt).getTime();
+          }
         }
         return 0;
       })

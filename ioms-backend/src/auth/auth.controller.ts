@@ -1,5 +1,5 @@
 // src/auth/auth.controller.ts
-import { Body, Controller, Post, HttpCode, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Post, Get, Request, HttpCode, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterAdminDto } from './dto/register-admin.dto';
 import { LoginDto } from './dto/login.dto';
@@ -16,6 +16,11 @@ import { LoginResponseDto } from './dto/login-response.dto';
   forbidNonWhitelisted: true 
 }))
 export class AuthController {
+  @Get('me')
+  async getMe(@Request() req) {
+    // Retorna os dados do usuário autenticado
+    return req.user;
+  }
   constructor(private readonly authService: AuthService) {}
 
   @Public()
@@ -66,7 +71,12 @@ export class AuthController {
     description: 'Email already exists' 
   })
   async registerAdmin(@Body() registerAdminDto: RegisterAdminDto) {
-    return this.authService.registerAdmin(registerAdminDto);
+    try {
+      return await this.authService.registerAdmin(registerAdminDto);
+    } catch (error) {
+      console.log('Erro no controller ao registrar admin:', error);
+      throw error;
+    }
   }
 
   @Public()

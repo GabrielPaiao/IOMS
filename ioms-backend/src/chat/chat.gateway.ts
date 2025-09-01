@@ -76,6 +76,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         },
       });
 
+      // Log para capturar todos os eventos
+      client.onAny((eventName, ...args) => {
+        console.log(`[WEBSOCKET] Received event "${eventName}" from user ${client.userId}:`, args);
+      });
+
       console.log(`User ${payload.sub} connected to chat`);
     } catch (error) {
       console.error('WebSocket authentication error:', error);
@@ -104,6 +109,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: AuthenticatedSocket,
   ) {
     try {
+      console.log(`User ${client.userId} joining conversation ${data.conversationId}`);
+      
       if (!client.userId) {
         throw new Error('User not authenticated');
       }
@@ -113,6 +120,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       
       // Juntar à sala da conversa
       client.join(`conversation:${data.conversationId}`);
+      console.log(`User ${client.userId} joined room conversation:${data.conversationId}`);
       
       // Marcar conversa como lida
       await this.chatService.markConversationAsRead(client.userId, data.conversationId);
@@ -137,12 +145,15 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: AuthenticatedSocket,
   ) {
     try {
+      console.log(`User ${client.userId} leaving conversation ${data.conversationId}`);
+      
       if (!client.userId) {
         throw new Error('User not authenticated');
       }
 
       // Sair da sala da conversa
       client.leave(`conversation:${data.conversationId}`);
+      console.log(`User ${client.userId} left room conversation:${data.conversationId}`);
 
       // Notificar outros participantes
       client.to(`conversation:${data.conversationId}`).emit('conversation:userLeft', {

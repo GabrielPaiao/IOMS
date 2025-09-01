@@ -1,0 +1,187 @@
+/* src/styles/theme.css */
+/* Nova paleta de cores: Amarelo, Preto, Cinza e Branco */
+
+/* Substituir cores azuis por equivalentes na nova paleta */
+.bg-blue-600 { 
+  background-color: #393939 !important; 
+}
+
+.bg-blue-700 { 
+  background-color: #1f1f1f !important; 
+}
+
+.bg-blue-100 { 
+  background-color: #f5f5f5 !important; 
+}
+
+.bg-blue-50 { 
+  background-color: #fafafa !important; 
+}
+
+.text-blue-600 { 
+  color: #393939 !important; 
+}
+
+.text-blue-700 { 
+  color: #1f1f1f !important; 
+}
+
+.text-blue-800 { 
+  color: #393939 !important; 
+}
+
+.border-blue-500 { 
+  border-color: #FFD700 !important; 
+}
+
+.border-blue-600 { 
+  border-color: #FFD700 !important; 
+}
+
+.hover\:bg-blue-700:hover { 
+  background-color: #1f1f1f !important; 
+}
+
+.hover\:text-blue-700:hover { 
+  color: #1f1f1f !important; 
+}
+
+.hover\:text-blue-800:hover { 
+  color: #393939 !important; 
+}
+
+.hover\:bg-blue-50:hover { 
+  background-color: #fafafa !important; 
+}
+
+.focus\:ring-blue-500:focus { 
+  --tw-ring-color: #FFD700 !important; 
+}
+
+.focus\:border-blue-500:focus { 
+  border-color: #FFD700 !important; 
+}
+
+/* Campos de formulário */
+input:focus, select:focus, textarea:focus {
+  --tw-ring-color: #FFD700 !important;
+  border-color: #FFD700 !important;
+}
+
+/* Links */
+.text-blue-600 a, a.text-blue-600 {
+  color: #393939 !important;
+}
+
+.hover\:text-blue-800 a:hover, a.hover\:text-blue-800:hover {
+  color: #1f1f1f !important;
+}
+
+/* Elementos principais */
+.text-gray-900 {
+  color: #393939 !important;
+}
+
+.text-gray-800 {
+  color: #393939 !important;
+}
+
+/* Aplicar globalmente aos títulos principais */
+h1, h2, h3, h4, h5, h6 {
+  color: #393939 !important;
+}
+
+/* Botões primários */
+.btn-primary {
+  background-color: #393939;
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #1f1f1f;
+}
+
+/* Botões secundários */
+.btn-secondary {
+  background-color: #FFD700;
+  color: #393939;
+  border: 1px solid #FFD700;
+}
+
+.btn-secondary:hover {
+  background-color: #e6c200;
+}
+
+/* Acentos amarelos */
+.accent-yellow {
+  background-color: #FFD700;
+  color: #393939;
+}
+
+.border-accent {
+  border-color: #FFD700;
+}
+
+/* Elementos ativos/selecionados */
+.active-tab {
+  border-bottom: 2px solid #FFD700;
+  color: #393939;
+  font-weight: bold;
+}
+
+/* Badges de notificação */
+.notification-badge {
+  background-color: #FFD700;
+  color: #393939;
+}
+
+/* Elementos interativos */
+.interactive-hover:hover {
+  background-color: #FFD700;
+  color: #393939;
+}
+
+/* Status colors ajustadas para usar a nova paleta */
+.status-approved {
+  background-color: #393939 !important;
+  color: white !important;
+}
+
+.status-pending {
+  background-color: #FFD700 !important;
+  color: #393939 !important;
+}
+
+.status-rejected {
+  background-color: #6b7280 !important;
+  color: white !important;
+}
+
+.status-in-progress {
+  background-color: #f59e0b !important;
+  color: white !important;
+}
+
+.status-completed {
+  background-color: #393939 !important;
+  color: white !important;
+}
+
+/* Status badges específicos */
+.bg-green-100 { background-color: #f3f4f6 !important; }
+.bg-green-800 { background-color: #393939 !important; }
+.text-green-800 { color: #393939 !important; }
+
+.bg-yellow-100 { background-color: #fffbeb !important; }
+.bg-yellow-800 { background-color: #FFD700 !important; }
+.text-yellow-800 { color: #393939 !important; }
+
+.bg-red-100 { background-color: #fef2f2 !important; }
+.bg-red-800 { background-color: #6b7280 !important; }
+.text-red-800 { color: #393939 !important; }
+.border-red-200 { border-color: #fecaca !important; }
+
+.bg-gray-100 { background-color: #f9fafb !important; }
+.bg-gray-800 { background-color: #393939 !important; }
+.text-gray-800 { color: #393939 !important; }

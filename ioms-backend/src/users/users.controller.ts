@@ -1,8 +1,9 @@
 // src/users/users.controller.ts
-import { Controller, Post, Body, Get, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards, Req, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InviteUserDto } from './dto/invite-user.dto';
+import { RegisterWithTokenDto } from './dto/register-with-token.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../shared/decorators/roles.decorator';
@@ -30,9 +31,9 @@ export class UsersController {
   @Post('register/:token')
   async registerWithToken(
     @Param('token') token: string,
-    @Body() createUserDto: CreateUserDto
+    @Body() registerDto: RegisterWithTokenDto
   ) {
-    return this.usersService.registerWithToken(token, createUserDto);
+    return this.usersService.registerWithToken(token, registerDto);
   }
 
   @Get('company')
@@ -42,5 +43,23 @@ export class UsersController {
       throw new Error('User not authenticated');
     }
     return this.usersService.getCompanyUsers(req.user.companyId);
+  }
+
+  @Get('me/applications')
+  @UseGuards(JwtAuthGuard)
+  async getMyApplications(@Req() req: Request) {
+    if (!req.user) {
+      throw new Error('User not authenticated');
+    }
+    return this.usersService.getMyApplications(req.user.id);
+  }
+
+  @Get('search')
+  @UseGuards(JwtAuthGuard)
+  async searchUsers(@Query('email') email: string, @Req() req: Request) {
+    if (!req.user) {
+      throw new Error('User not authenticated');
+    }
+    return this.usersService.searchUsersByEmail(email, req.user.companyId);
   }
 }

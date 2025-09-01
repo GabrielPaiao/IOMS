@@ -1,6 +1,4 @@
 // src/components/outageRequests/ApprovalDialog.tsx
-import type { Outage } from '../../types/outage';
-import { outageDetailsMock } from '../../mocks/dataMocks';
 
 interface ApprovalDialogProps {
   action: 'approve' | 'reject';

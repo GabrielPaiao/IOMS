@@ -17,12 +17,16 @@ import ApplicationDetailsPage from "../pages/ApplicationDetailsPage";
 import EditSectionPage from "../pages/EditSectionPage";
 import InviteUserPage from "../pages/InviteUserPage";
 import RegisterPage from "../pages/RegisterPage";
+import RegisterWithTokenPage from "../pages/RegisterWithTokenPage";
+import NewApplicationPage from "../pages/NewApplicationPage";
+import EditApplicationPage from "../pages/EditApplicationPage";
+import NotificationsPage from "../pages/NotificationsPage";
 
 function LayoutWithNavbar({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main className="flex-grow container mx-auto p-4 bg-yellow-50">
+      <main className="flex-grow container mx-auto p-4 bg-[#FFF9B1]">
         {children}
       </main>
       <Footer />
@@ -37,6 +41,7 @@ export function AppRoutes() {
         {/* Rotas públicas */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/auth/register" element={<RegisterWithTokenPage />} />
 
         {/* Rotas protegidas */}
         <Route path="/" element={
@@ -103,10 +108,26 @@ export function AppRoutes() {
           </ProtectedRoute>
         } />
         
+        <Route path="/applications/new" element={
+          <ProtectedRoute requiredRole="ADMIN">
+            <LayoutWithNavbar>
+              <NewApplicationPage />
+            </LayoutWithNavbar>
+          </ProtectedRoute>
+        } />
+        
         <Route path="/applications/:id" element={
           <ProtectedRoute>
             <LayoutWithNavbar>
               <ApplicationDetailsPage />
+            </LayoutWithNavbar>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/applications/:id/edit" element={
+          <ProtectedRoute>
+            <LayoutWithNavbar>
+              <EditApplicationPage />
             </LayoutWithNavbar>
           </ProtectedRoute>
         } />
@@ -123,6 +144,14 @@ export function AppRoutes() {
           <ProtectedRoute>
             <LayoutWithNavbar>
               <MyProfilePage />
+            </LayoutWithNavbar>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/notifications" element={
+          <ProtectedRoute>
+            <LayoutWithNavbar>
+              <NotificationsPage />
             </LayoutWithNavbar>
           </ProtectedRoute>
         } />
