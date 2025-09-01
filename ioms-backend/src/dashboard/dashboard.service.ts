@@ -98,13 +98,27 @@ export class DashboardService {
     });
 
     // Top aplicações com mais outages
-    const topApplications = await this.prisma.outage.groupBy({
+    const topApplicationsRaw = await this.prisma.outage.groupBy({
       by: ['applicationId'],
       where,
       _count: { id: true },
       orderBy: { _count: { id: 'desc' } },
       take: 5,
     });
+
+    // Buscar nomes das aplicações
+    const topApplications = await Promise.all(
+      topApplicationsRaw.map(async (app) => {
+        const application = await this.prisma.application.findUnique({
+          where: { id: app.applicationId },
+          select: { id: true, name: true }
+        });
+        return {
+          ...app,
+          application: application
+        };
+      })
+    );
 
     // Estatísticas de usuários
     const userStats = await this.prisma.outage.groupBy({

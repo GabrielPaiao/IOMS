@@ -28,10 +28,33 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user?.companyId) {
-      loadDashboardStats();
+      // Calcular datas baseadas no período selecionado
+      const now = new Date();
+      let startDate;
+      
+      switch (selectedPeriod) {
+        case 'week':
+          startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+          break;
+        case 'month':
+          startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+          break;
+        case 'quarter':
+          startDate = new Date(now.getTime() - (90 * 24 * 60 * 60 * 1000));
+          break;
+        default:
+          startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+      }
+
+      const filters = {
+        startDate: startDate.toISOString(),
+        endDate: now.toISOString()
+      };
+
+      loadDashboardStats(filters);
       loadCompanyOverview();
     }
-  }, [user?.companyId, loadDashboardStats, loadCompanyOverview]);
+  }, [user?.companyId, selectedPeriod, loadDashboardStats, loadCompanyOverview]);
 
   if (isLoading) {
     return (
@@ -46,14 +69,14 @@ export default function DashboardPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-600 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Erro ao carregar dashboard</h2>
+          <h2 className="text-2xl font-bold text-[#393939] mb-2">Erro ao carregar dashboard</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button 
             onClick={() => {
               loadDashboardStats();
               loadCompanyOverview();
             }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            className="bg-[#393939] text-white px-4 py-2 rounded-lg hover:bg-gray-800"
           >
             Tentar novamente
           </button>
@@ -82,7 +105,7 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-[#393939] mb-2">
             Dashboard - {user?.companyName || 'Empresa'}
           </h1>
           <p className="text-gray-600">
@@ -117,12 +140,12 @@ export default function DashboardPage() {
           {/* Total de Outages */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <ChartBar className="h-6 w-6 text-blue-600" />
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <ChartBar className="h-6 w-6 text-[#393939]" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total de Outages</p>
-                <p className="text-2xl font-bold text-gray-900">{overview.total}</p>
+                <p className="text-2xl font-bold text-[#393939]">{overview.total}</p>
               </div>
             </div>
           </div>
@@ -297,7 +320,9 @@ export default function DashboardPage() {
                 <div key={app.applicationId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
                     <span className="text-lg font-bold text-blue-600 mr-3">#{index + 1}</span>
-                    <span className="font-medium text-gray-900">Aplicação {app.applicationId}</span>
+                    <span className="font-medium text-gray-900">
+                      {app.application?.name || `Aplicação ${app.applicationId}`}
+                    </span>
                   </div>
                   <span className="text-sm text-gray-600">{app._count.id} outages</span>
                 </div>
@@ -305,16 +330,6 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-
-        {/* Gráficos e Visualizações */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Visualizações</h3>
-          <div className="text-center py-12 text-gray-500">
-            <ChartBar className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-            <p>Gráficos e visualizações serão implementados aqui</p>
-            <p className="text-sm">Integração com bibliotecas de gráficos como Chart.js ou Recharts</p>
-          </div>
-        </div>
       </div>
     </div>
   );

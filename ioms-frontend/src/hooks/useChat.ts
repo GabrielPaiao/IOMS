@@ -51,9 +51,9 @@ export const useChat = () => {
       setIsLoading(true);
       setError(null);
 
-  // Chamada real da API
-  const data = await chatService.getMessages(conversationId);
-  setMessages(data);
+      // Chamada real da API
+      const data = await chatService.getMessages(conversationId);
+      setMessages(data.messages);
       
       // Marcar como lida
       await markAsRead(conversationId);
@@ -76,12 +76,16 @@ export const useChat = () => {
       const newMessage: ChatMessage = {
         id: Date.now().toString(),
         conversationId: currentConversation.id,
-        senderId: user?.id || '',
-        senderName: (user?.firstName || '') + ' ' + (user?.lastName || '') || user?.name || 'Unknown User',
-        senderEmail: user?.email || '',
-        text: text.trim(),
-        timestamp: new Date().toISOString(),
-        outageId: currentConversation.outageId
+        userId: user?.id || '',
+        content: text.trim(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        user: {
+          id: user?.id || '',
+          firstName: user?.firstName || '',
+          lastName: user?.lastName || '',
+          email: user?.email || ''
+        }
       };
 
       // Adicionar mensagem localmente
@@ -91,7 +95,7 @@ export const useChat = () => {
       // Enviar mensagem para o backend
       await chatService.sendMessage({
         conversationId: currentConversation.id,
-        text: text.trim()
+        content: text.trim()
       });
 
       // Atualizar última mensagem na conversa
@@ -174,8 +178,8 @@ export const useChat = () => {
         c.id === message.conversationId 
           ? { 
               ...c, 
-              lastMessage: message.text, 
-              updatedAt: message.timestamp,
+              lastMessage: message.content, 
+              updatedAt: message.createdAt,
               unread: c.unread + 1
             }
           : c

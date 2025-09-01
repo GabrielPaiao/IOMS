@@ -1,5 +1,5 @@
 // src/outages/outages.service.ts
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma/prisma.service';
 import { CreateOutageDto } from './dto/create-outage.dto';
 
@@ -17,6 +17,35 @@ export class OutagesService {
 
     if (!application) {
       throw new BadRequestException('Application not found');
+    }
+
+    // Verificar se o usuário é Key User e se há outros Key Users para a aplicação
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+
+    if (user?.role === 'KEY_USER') {
+      // Verificar se o usuário é Key User da aplicação
+      const isKeyUserForApp = await this.prisma.applicationKeyUser.findFirst({
+        where: {
+          userId,
+          applicationId: applicationId
+        }
+      });
+
+      if (isKeyUserForApp) {
+        // Contar quantos Key Users existem para esta aplicação
+        const keyUsersCount = await this.prisma.applicationKeyUser.count({
+          where: {
+            applicationId: applicationId
+          }
+        });
+
+        if (keyUsersCount === 1) {
+          throw new ForbiddenException('You cannot create outage requests for applications where you are the only Key User. At least one other Key User is required for approval.');
+        }
+      }
     }
 
     // Criar outage
@@ -205,6 +234,54 @@ export class OutagesService {
     });
   }
 
+  async findPendingApprovalForUser(userId: string, companyId: string) {
+    try {
+      // Buscar as aplicações que o Key User gerencia
+      const userApplications = await this.prisma.applicationKeyUser.findMany({
+        where: { userId },
+        select: { applicationId: true },
+      });
+
+      const applicationIds = userApplications.map(app => app.applicationId);
+
+      if (applicationIds.length === 0) {
+        return []; // Se não gerencia nenhuma aplicação, não pode aprovar nada
+      }
+
+      const result = await this.prisma.outage.findMany({
+        where: {
+          companyId,
+          status: 'PENDING',
+          applicationId: { in: applicationIds },
+        },
+        include: {
+          application: { 
+            select: { id: true, name: true },
+          },
+          company: { select: { id: true, name: true } },
+          createdByUser: {
+            select: { id: true, firstName: true, lastName: true, email: true },
+          },
+          approvalWorkflows: {
+            include: {
+              steps: {
+                include: {
+                  assignee: { select: { id: true, firstName: true, lastName: true, email: true } },
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Erro em findPendingApprovalForUser:', error);
+      throw error;
+    }
+  }
+
   async getCalendar(companyId: string, filters?: any) {
     const where: any = { companyId };
 
@@ -342,6 +419,30 @@ export class OutagesService {
       throw new BadRequestException('Outage is not pending approval');
     }
 
+    // Verificar se o usuário não é o criador da outage
+    if (outage.createdBy === userId) {
+      throw new ForbiddenException('You cannot approve your own outage request');
+    }
+
+    // Verificar se o usuário é Key User da aplicação
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+
+    if (user?.role === 'KEY_USER') {
+      const isKeyUserForApp = await this.prisma.applicationKeyUser.findFirst({
+        where: {
+          userId,
+          applicationId: outage.applicationId
+        }
+      });
+
+      if (!isKeyUserForApp) {
+        throw new ForbiddenException('You can only approve outages for applications you manage');
+      }
+    }
+
     // Atualizar status
     const updatedOutage = await this.prisma.outage.update({
       where: { id },
@@ -375,6 +476,25 @@ export class OutagesService {
       throw new BadRequestException('Outage is not pending approval');
     }
 
+    // Verificar se o usuário é Key User da aplicação
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+
+    if (user?.role === 'KEY_USER') {
+      const isKeyUserForApp = await this.prisma.applicationKeyUser.findFirst({
+        where: {
+          userId,
+          applicationId: outage.applicationId
+        }
+      });
+
+      if (!isKeyUserForApp) {
+        throw new ForbiddenException('You can only reject outages for applications you manage');
+      }
+    }
+
     // Atualizar status
     const updatedOutage = await this.prisma.outage.update({
       where: { id },
@@ -404,8 +524,13 @@ export class OutagesService {
   async cancelOutage(id: string, userId: string, cancellationData: any) {
     const outage = await this.findOne(id);
 
-    if (outage.status === 'APPROVED' && outage.createdBy !== userId) {
-      throw new BadRequestException('Cannot cancel approved outage created by another user');
+    // Verificar se a outage pode ser cancelada
+    if (outage.status === 'CANCELLED') {
+      throw new BadRequestException('Outage is already cancelled');
+    }
+    
+    if (outage.status === 'COMPLETED') {
+      throw new BadRequestException('Cannot cancel completed outage');
     }
 
     // Atualizar status

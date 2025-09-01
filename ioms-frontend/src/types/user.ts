@@ -4,7 +4,8 @@ export type User = {
   name: string;
   email: string;
   role: 'dev' | 'key_user' | 'admin';
-  locations: string[]; // Mude de location para array de strings
+  location?: string; // Localização base do usuário
+  locations: string[]; // Array de localizações (para compatibilidade)
   companyId?: string;
   firstName?: string;
   lastName?: string;

@@ -9,6 +9,11 @@ export default function MyApplicationsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   
+  // Verificar se usuário é ADMIN
+  const isAdmin = () => {
+    return user?.role?.toUpperCase() === 'ADMIN';
+  };
+  
   const [applications, setApplications] = useState<any[]>([]);
   const [filteredApplications, setFilteredApplications] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -226,13 +231,21 @@ export default function MyApplicationsPage() {
                 Gerencie suas aplicações do sistema IOMS
               </p>
             </div>
-            <button
-              onClick={() => navigate('/applications/new')}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              <Plus size={20} className="mr-2" />
-              Nova Aplicação
-            </button>
+            {isAdmin() && (
+              <button
+                onClick={() => navigate('/applications/new')}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <Plus size={20} className="mr-2" />
+                Nova Aplicação
+              </button>
+            )}
+            {!isAdmin() && (
+              <div className="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-md">
+                <p>Apenas administradores podem</p>
+                <p>criar novas aplicações</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -267,13 +280,20 @@ export default function MyApplicationsPage() {
                 : 'Você não possui aplicações registradas no sistema.'
               }
             </p>
-            <button
-              onClick={() => navigate('/applications/new')}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-            >
-              <Plus size={20} className="mr-2" />
-              Criar primeira aplicação
-            </button>
+            {isAdmin() && (
+              <button
+                onClick={() => navigate('/applications/new')}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                <Plus size={20} className="mr-2" />
+                Criar primeira aplicação
+              </button>
+            )}
+            {!isAdmin() && (
+              <div className="text-sm text-gray-500">
+                Apenas administradores podem criar novas aplicações.
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-6">
@@ -292,20 +312,24 @@ export default function MyApplicationsPage() {
                       <Eye size={16} className="mr-1" />
                       Visualizar
                     </button>
-                    <button
-                      onClick={() => navigate(`/applications/${app.id}/edit`)}
-                      className="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md text-sm text-white bg-indigo-600 hover:bg-indigo-700"
-                    >
-                      <PencilSimple size={16} className="mr-1" />
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDeleteApplication(app.id, app.name)}
-                      className="inline-flex items-center px-3 py-1.5 border border-red-300 rounded-md text-sm text-red-700 bg-white hover:bg-red-50"
-                    >
-                      <Trash size={16} className="mr-1" />
-                      Excluir
-                    </button>
+                    {isAdmin() && (
+                      <>
+                        <button
+                          onClick={() => navigate(`/applications/${app.id}/edit`)}
+                          className="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md text-sm text-white bg-indigo-600 hover:bg-indigo-700"
+                        >
+                          <PencilSimple size={16} className="mr-1" />
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDeleteApplication(app.id, app.name)}
+                          className="inline-flex items-center px-3 py-1.5 border border-red-300 rounded-md text-sm text-red-700 bg-white hover:bg-red-50"
+                        >
+                          <Trash size={16} className="mr-1" />
+                          Excluir
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -314,7 +338,7 @@ export default function MyApplicationsPage() {
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-lg font-medium text-gray-900">Ambientes</h4>
-                      {!editingEnvironments[app.id] && (
+                      {!editingEnvironments[app.id] && isAdmin() && (
                         <button
                           onClick={() => startEditingEnvironments(app.id)}
                           className="text-sm text-indigo-600 hover:text-indigo-700"
@@ -396,7 +420,7 @@ export default function MyApplicationsPage() {
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-lg font-medium text-gray-900">Key Users</h4>
-                      {!editingKeyUsers[app.id] && (
+                      {!editingKeyUsers[app.id] && isAdmin() && (
                         <button
                           onClick={() => startEditingKeyUsers(app.id)}
                           className="text-sm text-indigo-600 hover:text-indigo-700"

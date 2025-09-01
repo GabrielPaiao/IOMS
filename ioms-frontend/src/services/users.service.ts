@@ -11,10 +11,7 @@ export interface CreateUserRequest {
 
 export interface InviteUserRequest {
   email: string;
-  firstName: string;
-  lastName: string;
   role: 'ADMIN' | 'KEY_USER' | 'DEV';
-  companyId: string;
 }
 
 export interface UpdateUserRequest extends Partial<CreateUserRequest> {
@@ -48,6 +45,16 @@ class UsersService {
 
   async inviteUser(data: InviteUserRequest): Promise<{ message: string }> {
     const response = await api.post<{ message: string }>('/users/invite', data);
+    return response.data;
+  }
+
+  async registerWithToken(token: string, userData: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+  }): Promise<User> {
+    const response = await api.post<User>(`/users/register/${token}`, userData);
     return response.data;
   }
 

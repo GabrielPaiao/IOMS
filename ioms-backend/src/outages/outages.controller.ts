@@ -43,9 +43,15 @@ export class OutagesController {
   }
 
   @Get('pending-approval')
-  @Roles(UserRole.ADMIN, UserRole.KEY_USER)
+  @Roles(UserRole.ADMIN, UserRole.KEY_USER, UserRole.DEV)
   findPendingApproval(@Request() req) {
-    return this.outagesService.findPendingApproval(req.user.companyId);
+    // Admins e Devs podem visualizar todas as outages pendentes da empresa
+    // Key Users só veem as outages das aplicações que gerenciam
+    if (req.user.role === 'ADMIN' || req.user.role === 'DEV') {
+      return this.outagesService.findPendingApproval(req.user.companyId);
+    } else {
+      return this.outagesService.findPendingApprovalForUser(req.user.id, req.user.companyId);
+    }
   }
 
   @Get('calendar')
@@ -105,7 +111,7 @@ export class OutagesController {
   }
 
   @Patch(':id/cancel')
-  @Roles(UserRole.ADMIN, UserRole.KEY_USER, UserRole.DEV)
+  @Roles(UserRole.ADMIN)
   cancelOutage(
     @Param('id') id: string,
     @Body() cancellationData: any,

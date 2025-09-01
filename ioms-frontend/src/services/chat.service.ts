@@ -1,20 +1,39 @@
 // src/services/chat.service.ts
 import { api } from './api';
+import { io, Socket } from 'socket.io-client';
 
 export interface ChatMessage {
   id: string;
   conversationId: string;
-  senderId: string;
-  senderName: string;
-  senderEmail: string;
-  text: string;
-  timestamp: string;
-  outageId?: string;
+  userId: string;
+  content: string;
+  replyToMessageId?: string;
+  attachmentUrl?: string;
+  attachmentType?: string;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatar?: string;
+  };
+  replyToMessage?: {
+    id: string;
+    content: string;
+    user: {
+      id: string;
+      firstName: string;
+      lastName: string;
+    };
+  };
 }
 
 export interface ChatConversation {
   id: string;
-  topic: string;
+  title: string;
+  description?: string;
   participants: Array<{
     id: string;
     name: string;
@@ -22,81 +41,113 @@ export interface ChatConversation {
     role: string;
   }>;
   lastMessage: string;
-  unread: number;
+  unread?: number;
   outageId?: string;
   createdAt: string;
   updatedAt: string;
+  _count?: {
+    messages: number;
+  };
+}
+
+export interface MessagesResponse {
+  messages: ChatMessage[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
 export interface CreateConversationRequest {
-  topic: string;
-  participantIds: string[];
-  outageId?: string;
+  title: string;
+  participantEmails: string[];
+  description?: string;
+  type?: 'direct' | 'group' | 'outage' | 'application';
+  relatedOutageId?: string;
+  relatedApplicationId?: string;
 }
 
 export interface SendMessageRequest {
   conversationId: string;
-  text: string;
+  content: string;
+  replyToMessageId?: string;
+  attachmentUrl?: string;
+  attachmentType?: string;
 }
 
 class ChatService {
-  private ws: WebSocket | null = null;
-  private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
-  private reconnectDelay = 1000;
+  private socket: Socket | null = null;
 
-  // WebSocket para mensagens em tempo real
+  // Socket.IO para mensagens em tempo real
   initializeWebSocket(token: string, onMessage: (message: ChatMessage) => void) {
     try {
-      this.ws = new WebSocket(`ws://localhost:3000/ws/chat?token=${token}`);
+      console.log('[FRONTEND] Initializing WebSocket with token:', token ? 'Token provided' : 'No token');
       
-      this.ws.onopen = () => {
-        console.log('WebSocket connected');
-        this.reconnectAttempts = 0;
-      };
+      this.socket = io('http://localhost:3001/chat', {
+        auth: {
+          token: token
+        },
+        transports: ['websocket', 'polling']
+      });
+      
+      this.socket.on('connect', () => {
+        console.log('[FRONTEND] Socket.IO connected successfully');
+      });
 
-      this.ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'message') {
-            onMessage(data.message);
-          }
-        } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
-        }
-      };
+      this.socket.on('message:received', (message: ChatMessage) => {
+        console.log('[FRONTEND] Message received via WebSocket:', message);
+        onMessage(message);
+      });
 
-      this.ws.onclose = () => {
-        console.log('WebSocket disconnected');
-        this.attemptReconnect(token, onMessage);
-      };
+      this.socket.on('disconnect', () => {
+        console.log('[FRONTEND] Socket.IO disconnected');
+      });
 
-      this.ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
+      this.socket.on('connect_error', (error) => {
+        console.error('[FRONTEND] Socket.IO connection error:', error);
+      });
 
     } catch (error) {
-      console.error('Error initializing WebSocket:', error);
-    }
-  }
-
-  private attemptReconnect(token: string, onMessage: (message: ChatMessage) => void) {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts++;
-      console.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-      
-      setTimeout(() => {
-        this.initializeWebSocket(token, onMessage);
-      }, this.reconnectDelay * this.reconnectAttempts);
-    } else {
-      console.error('Max reconnection attempts reached');
+      console.error('[FRONTEND] Error initializing Socket.IO:', error);
     }
   }
 
   disconnect() {
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
+  }
+
+  // Juntar-se a uma conversa específica
+  joinConversation(conversationId: string) {
+    if (this.socket && this.socket.connected) {
+      console.log(`[FRONTEND] Socket is connected, emitting join for conversation: ${conversationId}`);
+      this.socket.emit('conversation:join', { conversationId });
+      console.log(`[FRONTEND] Join event emitted for conversation: ${conversationId}`);
+    } else {
+      console.log(`[FRONTEND] Socket not connected (socket: ${!!this.socket}, connected: ${this.socket?.connected}), cannot join conversation: ${conversationId}`);
+      
+      // Tentar novamente quando conectar
+      if (this.socket) {
+        this.socket.once('connect', () => {
+          console.log(`[FRONTEND] Socket connected, retrying join for conversation: ${conversationId}`);
+          this.socket!.emit('conversation:join', { conversationId });
+        });
+      }
+    }
+  }
+
+  // Sair de uma conversa específica
+  leaveConversation(conversationId: string) {
+    if (this.socket && this.socket.connected) {
+      console.log(`[FRONTEND] Socket is connected, emitting leave for conversation: ${conversationId}`);
+      this.socket.emit('conversation:leave', { conversationId });
+      console.log(`[FRONTEND] Leave event emitted for conversation: ${conversationId}`);
+    } else {
+      console.log(`[FRONTEND] Socket not connected (socket: ${!!this.socket}, connected: ${this.socket?.connected}), cannot leave conversation: ${conversationId}`);
     }
   }
 
@@ -131,10 +182,10 @@ class ChatService {
     }
   }
 
-  async getMessages(conversationId: string, limit = 50, offset = 0): Promise<ChatMessage[]> {
+  async getMessages(conversationId: string, limit = 50, page = 1): Promise<MessagesResponse> {
     try {
       const response = await api.get(`/chat/conversations/${conversationId}/messages`, {
-        params: { limit, offset }
+        params: { limit, page }
       });
       return response.data;
     } catch (error) {

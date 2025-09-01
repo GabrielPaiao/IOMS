@@ -30,7 +30,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         if (authService.isAuthenticated()) {
           const currentUser = await authService.getCurrentUser();
-          setUser(currentUser);
+          setUser(normalizeUserRole(currentUser));
         }
       } catch (error) {
         console.error('Erro ao verificar autenticação:', error);
@@ -44,12 +44,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     checkAuth();
   }, []);
 
+  const normalizeUserRole = (user: any): User => {
+    const roleMapping: Record<string, 'dev' | 'key_user' | 'admin'> = {
+      'DEV': 'dev',
+      'KEY_USER': 'key_user',
+      'ADMIN': 'admin'
+    };
+
+    return {
+      ...user,
+      role: roleMapping[user.role] || user.role.toLowerCase()
+    };
+  };
+
   const login = async (credentials: LoginCredentials) => {
     try {
       setIsLoading(true);
       const response = await authService.login(credentials);
       authService.setTokens(response.accessToken, response.refreshToken);
-      setUser(response.user);
+      setUser(normalizeUserRole(response.user));
     } catch (error) {
       console.error('Erro no login:', error);
       throw error;
@@ -63,7 +76,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(true);
       const response = await authService.register(data);
       authService.setTokens(response.accessToken, response.refreshToken);
-      setUser(response.user);
+      setUser(normalizeUserRole(response.user));
     } catch (error) {
       console.error('Erro no registro:', error);
       throw error;
@@ -85,7 +98,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const refreshUser = async () => {
     try {
       const currentUser = await authService.getCurrentUser();
-      setUser(currentUser);
+      setUser(normalizeUserRole(currentUser));
     } catch (error) {
       console.error('Erro ao atualizar usuário:', error);
       await logout();

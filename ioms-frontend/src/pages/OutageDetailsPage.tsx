@@ -3,17 +3,17 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useOutagesAdvanced } from '../hooks/useOutagesAdvanced';
-import { 
+import {
   ArrowLeft, 
-  PencilSimple as Edit, 
-  Trash, 
+  ProhibitInset as Cancel,
   Calendar, 
   Clock, 
   CheckCircle,
   XCircle,
   ClockCounterClockwise,
   User,
-  ChatCircle
+  PencilSimple as Edit,
+  Trash
 } from '@phosphor-icons/react';
 import CriticalityBadge from '../components/outageRequests/CriticalityBadge';
 import ApprovalActions from '../components/outageRequests/ApprovalActions';
@@ -26,6 +26,7 @@ export default function OutageDetailsPage() {
   const { 
     getOutageById, 
     getChangeHistory,
+    cancelOutage,
     isLoading, 
     error,
     clearError 
@@ -83,6 +84,23 @@ export default function OutageDetailsPage() {
       navigate('/outages');
     } catch (err) {
       console.error('Error deleting outage:', err);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!confirm('Tem certeza que deseja cancelar esta outage? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+
+    const reason = prompt('Por favor, informe o motivo do cancelamento (opcional):');
+    
+    try {
+      const cancelled = await cancelOutage(id!, reason || undefined);
+      setOutage(cancelled);
+      alert('Outage cancelada com sucesso!');
+    } catch (err) {
+      console.error('Error cancelling outage:', err);
+      alert('Erro ao cancelar outage. Tente novamente.');
     }
   };
 
@@ -145,6 +163,17 @@ export default function OutageDetailsPage() {
     
     // Apenas admin pode deletar
     return user.role?.toUpperCase() === 'ADMIN';
+  };
+
+  const canCancel = () => {
+    if (!outage || !user) return false;
+    
+    // Apenas admin pode cancelar
+    // E a outage não pode já estar cancelada ou concluída
+    return (
+      user.role?.toUpperCase() === 'ADMIN' &&
+      !['CANCELLED', 'COMPLETED'].includes(outage.status?.toUpperCase())
+    );
   };
 
   if (isLoading || isLoadingOutage) {
@@ -219,6 +248,16 @@ export default function OutageDetailsPage() {
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Editar
+                </button>
+              )}
+
+              {canCancel() && (
+                <button
+                  onClick={handleCancel}
+                  className="px-4 py-2 border border-orange-300 text-orange-700 rounded-md hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-500 flex items-center"
+                >
+                  <Cancel className="h-4 w-4 mr-2" />
+                  Cancelar
                 </button>
               )}
               
@@ -396,29 +435,15 @@ export default function OutageDetailsPage() {
                   </div>
 
                   {/* Ações de Aprovação */}
-                  {outage.status === 'pending' && (
+                  {(outage.status === 'pending' || outage.status === 'PENDING') && (
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">
                         Ações de Aprovação
                       </h3>
+                      <p className="text-xs text-gray-500 mb-2">Debug: Status = "{outage.status}"</p>
                       <ApprovalActions outageId={outage.id} outage={outage} />
                     </div>
                   )}
-
-                  {/* Chat */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <ChatCircle className="h-5 w-5 mr-2 text-purple-600" />
-                      Chat
-                    </h3>
-                    
-                    <div className="bg-gray-50 rounded-lg p-4 text-center">
-                      <p className="text-gray-600 mb-3">Sistema de chat será implementado aqui</p>
-                      <button className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
-                        Abrir Chat
-                      </button>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>

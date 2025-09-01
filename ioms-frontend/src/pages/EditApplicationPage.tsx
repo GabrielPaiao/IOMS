@@ -1,11 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, X, Plus } from '@phosphor-icons/react';
+import { useAuth } from '../context/AuthContext';
 import applicationsService from '../services/applications.service';
 
 export default function EditApplicationPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Verificar se usuário é ADMIN
+  useEffect(() => {
+    if (user && user.role?.toUpperCase() !== 'ADMIN') {
+      alert('Acesso negado. Apenas administradores podem editar aplicações.');
+      navigate('/applications');
+    }
+  }, [user, navigate]);
   
   const [application, setApplication] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import applicationsService from '../services/applications.service';
@@ -6,6 +6,15 @@ import applicationsService from '../services/applications.service';
 export default function NewApplicationPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Verificar se usuário é ADMIN
+  useEffect(() => {
+    if (user && user.role?.toUpperCase() !== 'ADMIN') {
+      alert('Acesso negado. Apenas administradores podem criar aplicações.');
+      navigate('/applications');
+    }
+  }, [user, navigate]);
+
   const [form, setForm] = useState<{
     name: string;
     description: string;

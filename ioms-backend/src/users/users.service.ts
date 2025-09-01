@@ -9,6 +9,7 @@ import {
 import { PrismaService } from '../shared/prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InviteUserDto } from './dto/invite-user.dto';
+import { RegisterWithTokenDto } from './dto/register-with-token.dto';
 import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { MailService } from '../mail/mail.service';
@@ -58,42 +59,64 @@ export class UsersService {
   async inviteUser(inviteUserDto: InviteUserDto, companyId: string, inviterId: string) {
     await this.validateAdminInviter(inviterId, companyId);
     await this.validateEmailNotRegistered(inviteUserDto.email);
+    
+    // Verificar se já existe convite pendente
+    const existingInvitation = await this.prisma.invitation.findUnique({
+      where: { email: inviteUserDto.email }
+    });
 
     const { token, expiration } = this.generateInvitationToken();
     
     try {
-      const invitation = await this.prisma.invitation.create({
-        data: {
-          email: inviteUserDto.email,
-          role: inviteUserDto.role,
-          token,
-          expiresAt: expiration,
-          companyId,
-        }
-      });
+      let invitation;
+      
+      if (existingInvitation) {
+        // Atualizar convite existente
+        invitation = await this.prisma.invitation.update({
+          where: { email: inviteUserDto.email },
+          data: {
+            role: inviteUserDto.role,
+            token,
+            expiresAt: expiration,
+            companyId,
+          }
+        });
+      } else {
+        // Criar novo convite
+        invitation = await this.prisma.invitation.create({
+          data: {
+            email: inviteUserDto.email,
+            role: inviteUserDto.role,
+            token,
+            expiresAt: expiration,
+            companyId,
+          }
+        });
+      }
 
       await this.sendInvitationEmail(inviteUserDto, token);
 
       return { 
-        message: 'Invitation sent successfully',
+        message: existingInvitation ? 'Invitation updated and resent successfully' : 'Invitation sent successfully',
         invitationId: invitation.id,
         expiresAt: invitation.expiresAt
       };
     } catch (error) {
+      console.error('Error in inviteUser:', error);
       throw new InternalServerErrorException('Failed to send invitation');
     }
   }
 
-  async registerWithToken(token: string, createUserDto: CreateUserDto) {
-    const invitation = await this.validateInvitationToken(token, createUserDto.email);
+  async registerWithToken(token: string, registerDto: RegisterWithTokenDto) {
+    const invitation = await this.validateInvitationToken(token, registerDto.email);
 
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
           email: invitation.email,
-          firstName: invitation.firstName || 'User',
-          lastName: invitation.lastName || '',
-          password: await bcrypt.hash(createUserDto.password, this.SALT_ROUNDS),
+          firstName: registerDto.firstName,
+          lastName: registerDto.lastName,
+          password: await bcrypt.hash(registerDto.password, this.SALT_ROUNDS),
           role: invitation.role,
           companyId: invitation.companyId,
         },
@@ -128,19 +151,26 @@ export class UsersService {
   }
 
   async getMyApplications(userId: string) {
-    // Primeiro, pegar as aplicações onde o usuário é key user
-    const keyUserApplications = await this.prisma.$queryRaw`
-      SELECT DISTINCT app.*
-      FROM applications app
-      INNER JOIN application_key_users aku ON app.id = aku."applicationId"
-      WHERE aku."userId" = ${userId}
-      ORDER BY app."createdAt" DESC
-    ` as any[];
+    // Buscar o usuário para pegar a empresa
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { companyId: true }
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Buscar todas as aplicações da empresa do usuário
+    const applications = await this.prisma.application.findMany({
+      where: { companyId: user.companyId },
+      orderBy: { createdAt: 'desc' }
+    });
 
     // Para cada aplicação, buscar os relacionamentos
     const enrichedApplications: any[] = [];
     
-    for (const app of keyUserApplications) {
+    for (const app of applications) {
       // Buscar ambientes
       const environments = await this.prisma.applicationEnvironment.findMany({
         where: { applicationId: app.id },
@@ -234,7 +264,6 @@ export class UsersService {
     try {
       await this.mailService.sendUserInvitation(
         inviteUserDto.email,
-        inviteUserDto.firstName,
         token,
         inviteUserDto.role
       );
@@ -262,5 +291,30 @@ export class UsersService {
     }
 
     return invitation;
+  }
+
+  async searchUsersByEmail(email: string, companyId: string) {
+    if (!email || email.length < 2) {
+      return [];
+    }
+
+    return this.prisma.user.findMany({
+      where: {
+        companyId,
+        email: {
+          contains: email,
+          mode: 'insensitive'
+        }
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+      },
+      take: 10,
+      orderBy: { email: 'asc' },
+    });
   }
 }

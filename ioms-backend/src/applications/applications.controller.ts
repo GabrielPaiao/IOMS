@@ -24,7 +24,7 @@ export class ApplicationsController {
   constructor(private readonly applicationsService: ApplicationsService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN, UserRole.KEY_USER)
+  @Roles(UserRole.ADMIN)
   create(@Body() createApplicationDto: CreateApplicationDto, @Request() req) {
     return this.applicationsService.create(createApplicationDto, req.user.id);
   }
@@ -55,7 +55,7 @@ export class ApplicationsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.KEY_USER)
+  @Roles(UserRole.ADMIN)
   update(
     @Param('id') id: string,
     @Body() updateApplicationDto: UpdateApplicationDto,

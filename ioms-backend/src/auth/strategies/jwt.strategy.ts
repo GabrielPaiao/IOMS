@@ -37,6 +37,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
           isActive: true,
           firstName: true, // Útil para logs e mensagens
           lastName: true,  // Útil para logs e mensagens
+          location: true,  // Localização do usuário
         },
       });
 

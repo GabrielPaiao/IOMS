@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { useOutagesAdvanced } from '../hooks/useOutagesAdvanced';
 import applicationsService from '../services/applications.service';
 import { 
@@ -18,12 +19,18 @@ import {
 export default function ApplicationDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { 
     getApplicationById,
     isLoading, 
     error,
     clearError 
   } = useOutagesAdvanced();
+  
+  // Verificar se usuário é ADMIN
+  const isAdmin = () => {
+    return user?.role?.toUpperCase() === 'ADMIN';
+  };
 
   const [application, setApplication] = useState<any>(null);
   const [recentOutages, setRecentOutages] = useState<any[]>([]);
@@ -74,7 +81,7 @@ export default function ApplicationDetailsPage() {
   };
 
   const handleNewOutage = () => {
-    navigate('/new-outage', { 
+    navigate('/outages/new', { 
       state: { 
         applicationId: id,
         applicationName: application?.name 
@@ -187,29 +194,35 @@ export default function ApplicationDetailsPage() {
             </div>
             
             <div className="flex space-x-3">
-              <button
-                onClick={handleNewOutage}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Outage
-              </button>
+              {user?.role !== 'admin' && (
+                <button
+                  onClick={handleNewOutage}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Outage
+                </button>
+              )}
               
-              <button
-                onClick={handleEdit}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Editar
-              </button>
-              
-              <button
-                onClick={handleDelete}
-                className="px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center"
-              >
-                <Trash className="h-4 w-4 mr-2" />
-                Excluir
-              </button>
+              {isAdmin() && (
+                <>
+                  <button
+                    onClick={handleEdit}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                  </button>
+                  
+                  <button
+                    onClick={handleDelete}
+                    className="px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center"
+                  >
+                    <Trash className="h-4 w-4 mr-2" />
+                    Excluir
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -427,21 +440,25 @@ export default function ApplicationDetailsPage() {
               </h3>
               
               <div className="space-y-3">
-                <button
-                  onClick={handleNewOutage}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nova Outage
-                </button>
+                {user?.role !== 'admin' && (
+                  <button
+                    onClick={handleNewOutage}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova Outage
+                  </button>
+                )}
                 
-                <button
-                  onClick={handleEdit}
-                  className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar Aplicação
-                </button>
+                {isAdmin() && (
+                  <button
+                    onClick={handleEdit}
+                    className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar Aplicação
+                  </button>
+                )}
                 
                 <button
                   onClick={() => navigate(`/applications/${id}/outages`)}

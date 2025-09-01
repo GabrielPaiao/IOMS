@@ -22,7 +22,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
           from: `"IOMS" <${configService.get('MAIL_FROM')}>`,
         },
         template: {
-          dir: __dirname + '/templates',
+          dir: process.cwd() + '/dist/mail/templates',
           adapter: new HandlebarsAdapter(),
           options: {
             strict: true,

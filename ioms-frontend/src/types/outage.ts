@@ -2,7 +2,7 @@
 
 // Tipos Básicos
 export type UserRole = 'dev' | 'key_user' | 'admin';
-export type CriticalityLevel = '1 (highest)' | '2' | '3' | '4' | '5 (lowest)';
+export type CriticalityLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type Environment = string;
 export type LocationCode = 'GUA' | 'SJC' | 'OTHER';
 
