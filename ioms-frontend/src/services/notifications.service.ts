@@ -1,6 +1,6 @@
 import api from './api';
+import { authService } from './auth.service';
 import type { OutageNotification } from '../types/outage';
-import { config } from '../../config';
 
 export interface NotificationFilters {
   read?: boolean;
@@ -22,112 +22,10 @@ export interface NotificationPreferences {
 }
 
 class NotificationsService {
-  private ws: WebSocket | null = null;
-  private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
-  private reconnectDelay = 1000;
-  private heartbeatInterval: NodeJS.Timeout | null = null;
   private listeners: Map<string, Function[]> = new Map();
 
   constructor() {
-    this.initializeWebSocket();
-    this.setupHeartbeat();
-  }
-
-  // Inicializar WebSocket
-  private initializeWebSocket() {
-    try {
-      const wsUrl = config.WS_BASE_URL || config.API_BASE_URL.replace('http', 'ws') + '/notifications';
-      this.ws = new WebSocket(wsUrl);
-      
-      this.ws.onopen = () => {
-        console.log('WebSocket conectado para notificações');
-        this.reconnectAttempts = 0;
-        this.authenticateWebSocket();
-      };
-
-      this.ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          this.handleWebSocketMessage(data);
-        } catch (error) {
-          console.error('Erro ao processar mensagem WebSocket:', error);
-        }
-      };
-
-      this.ws.onclose = () => {
-        console.log('WebSocket desconectado');
-        this.scheduleReconnect();
-      };
-
-      this.ws.onerror = (error) => {
-        console.error('Erro no WebSocket:', error);
-      };
-    } catch (error) {
-      console.error('Erro ao inicializar WebSocket:', error);
-      this.fallbackToPolling();
-    }
-  }
-
-  // Autenticar WebSocket
-  private authenticateWebSocket() {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      const token = localStorage.getItem(config.TOKEN_STORAGE_KEY);
-      if (token) {
-        this.ws.send(JSON.stringify({
-          type: 'auth',
-          token
-        }));
-      }
-    }
-  }
-
-  // Configurar heartbeat
-  private setupHeartbeat() {
-    this.heartbeatInterval = setInterval(() => {
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ type: 'ping' }));
-      }
-    }, 30000); // 30 segundos
-  }
-
-  // Agendar reconexão
-  private scheduleReconnect() {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts++;
-      setTimeout(() => {
-        this.initializeWebSocket();
-      }, this.reconnectDelay * this.reconnectAttempts);
-    } else {
-      console.log('Máximo de tentativas de reconexão atingido, usando polling');
-      this.fallbackToPolling();
-    }
-  }
-
-  // Fallback para polling
-  private fallbackToPolling() {
-    console.log('Usando polling como fallback para notificações');
-    // Implementar polling aqui se necessário
-  }
-
-  // Processar mensagens WebSocket
-  private handleWebSocketMessage(data: any) {
-    switch (data.type) {
-      case 'outage_notification':
-        this.emit('outage', data.payload);
-        break;
-      case 'approval_request':
-        this.emit('approval', data.payload);
-        break;
-      case 'conflict_alert':
-        this.emit('conflict', data.payload);
-        break;
-      case 'reminder':
-        this.emit('reminder', data.payload);
-        break;
-      default:
-        console.log('Tipo de notificação desconhecido:', data.type);
-    }
+    console.log('NotificationsService inicializado');
   }
 
   // Sistema de eventos
@@ -148,22 +46,38 @@ class NotificationsService {
     }
   }
 
-  private emit(event: string, data: any) {
-    if (this.listeners.has(event)) {
-      this.listeners.get(event)!.forEach(callback => {
-        try {
-          callback(data);
-        } catch (error) {
-          console.error('Erro no callback de notificação:', error);
-        }
-      });
-    }
-  }
-
   // API REST para notificações
   async getNotifications(filters?: NotificationFilters): Promise<OutageNotification[]> {
-    const response = await api.get<OutageNotification[]>('/notifications', { params: filters });
-    return response.data;
+    console.log('DEBUG: getNotifications chamado');
+    const user = authService.getStoredUser();
+    console.log('DEBUG: User from authService:', user);
+    
+    if (!user) {
+      console.log('DEBUG: No user in localStorage');
+      return [];
+    }
+    
+    if (!user.id) {
+      console.log('DEBUG: No user ID found:', user);
+      return [];
+    }
+    
+    const params = {
+      ...filters,
+      recipientId: user.id
+    };
+    
+    console.log('DEBUG: Making API call with params:', params);
+    const response = await api.get('/notifications', { params });
+    console.log('DEBUG: API response:', response.data);
+    
+    // A API retorna um objeto com paginação, extrair apenas as notificações
+    if (response.data && response.data.notifications) {
+      return response.data.notifications;
+    }
+    
+    // Fallback para compatibilidade
+    return response.data || [];
   }
 
   async getNotificationById(id: string): Promise<OutageNotification> {
@@ -176,7 +90,10 @@ class NotificationsService {
   }
 
   async markAllAsRead(): Promise<void> {
-    await api.patch('/notifications/read-all');
+    const user = authService.getStoredUser();
+    if (!user?.id) return;
+    
+    await api.put(`/notifications/mark-all-read/${user.id}`);
   }
 
   async deleteNotification(id: string): Promise<void> {
@@ -184,8 +101,29 @@ class NotificationsService {
   }
 
   async getUnreadCount(): Promise<number> {
-    const response = await api.get<{ count: number }>('/notifications/unread-count');
-    return response.data.count;
+    const user = authService.getStoredUser();
+    if (!user) {
+      console.log('DEBUG: No user in localStorage for unread count');
+      return 0;
+    }
+    
+    if (!user.id) {
+      console.log('DEBUG: No user ID found for unread count:', user);
+      return 0;
+    }
+
+    const token = authService.getAccessToken();
+    console.log('DEBUG: Token exists:', !!token);
+    
+    console.log('DEBUG: Getting unread count for user:', user.id);
+    try {
+      const response = await api.get<{ count: number }>(`/notifications/unread-count/${user.id}`);
+      console.log('DEBUG: Unread count response:', response.data);
+      return response.data.count;
+    } catch (error) {
+      console.error('DEBUG: Error getting unread count:', error);
+      throw error;
+    }
   }
 
   async updatePreferences(preferences: Partial<NotificationPreferences>): Promise<void> {
@@ -199,26 +137,33 @@ class NotificationsService {
 
   // Métodos para enviar notificações específicas
   async sendOutageNotification(outageId: string, recipients: string[], type: string, message: string): Promise<void> {
-    await api.post('/notifications/send', {
-      outageId,
+    await api.post(`/notifications/outage/${outageId}`, {
       recipients,
       type,
       message
     });
   }
 
-  // Limpar recursos
+  async sendApprovalNotification(outageId: string, recipients: string[], message: string): Promise<void> {
+    await api.post(`/notifications/approval/${outageId}`, {
+      recipients,
+      message
+    });
+  }
+
+  async sendConflictNotification(outageId: string, recipients: string[], conflictData: any): Promise<void> {
+    await api.post(`/notifications/conflict/${outageId}`, {
+      recipients,
+      conflictData
+    });
+  }
+
   destroy() {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-    }
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
-    }
     this.listeners.clear();
   }
 }
 
-export const notificationsService = new NotificationsService();
+// Criar e exportar instância
+const notificationsService = new NotificationsService();
+
 export default notificationsService;

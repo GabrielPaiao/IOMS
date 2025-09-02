@@ -2,6 +2,9 @@
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../shared/prisma/prisma.service';
+import { RefreshTokenService } from './services/refresh-token.service';
+import { SessionActivityService } from './services/session-activity.service';
+import { JwtBlacklistService } from './services/jwt-blacklist.service';
 import * as bcrypt from 'bcryptjs';
 import { RegisterAdminDto } from './dto/register-admin.dto';
 import { ConfigService } from '@nestjs/config';
@@ -15,6 +18,9 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly refreshTokenService: RefreshTokenService,
+    private readonly sessionService: SessionActivityService,
+    private readonly blacklistService: JwtBlacklistService,
   ) {}
 
   async validateUser(email: string, password: string) {
@@ -45,27 +51,22 @@ export class AuthService {
     return result;
   }
 
-  async login(user: any) {
-    const payload = { 
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-      companyId: user.companyId,
-      iss: this.configService.get('JWT_ISSUER'),
-      aud: this.configService.get('JWT_AUDIENCE'),
-    };
+  async login(user: any, ipAddress?: string, userAgent?: string) {
+    // Gera novo par de tokens com rotação
+    const tokenPair = await this.refreshTokenService.generateTokenPair(user.id);
     
+    // Cria sessão do usuário
+    this.sessionService.createSession(
+      user.id, 
+      tokenPair.accessToken, 
+      tokenPair.refreshToken,
+      ipAddress,
+      userAgent
+    );
+
     return {
-      accessToken: this.jwtService.sign(payload, {
-        expiresIn: this.configService.get('JWT_EXPIRES_IN', '1h'),
-      }),
-      refreshToken: this.jwtService.sign(
-        { sub: user.id },
-        {
-          expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN', '7d'),
-          secret: this.configService.get('JWT_REFRESH_SECRET'),
-        }
-      ),
+      accessToken: tokenPair.accessToken,
+      refreshToken: tokenPair.refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -74,6 +75,12 @@ export class AuthService {
         lastName: user.lastName,
         companyId: user.companyId,
       },
+      // Informações adicionais sobre a sessão
+      sessionInfo: {
+        expiresIn: this.configService.get('JWT_EXPIRES_IN', '15m'),
+        refreshExpiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN', '7d'),
+        inactivityTimeout: this.configService.get('SESSION_INACTIVITY_TIMEOUT', 30 * 60 * 1000),
+      }
     };
   }
 
@@ -123,14 +130,15 @@ export class AuthService {
     }
   }
 
-  async refreshToken(refreshToken: string) {
+  async refreshToken(refreshToken: string, ipAddress?: string) {
     try {
-      const payload = this.jwtService.verify(refreshToken, {
-        secret: this.configService.get('JWT_REFRESH_SECRET'),
-      });
-
+      // Usa o serviço de refresh token com rotação
+      const tokenPair = await this.refreshTokenService.rotateRefreshToken(refreshToken, ipAddress);
+      
+      // Busca informações do usuário
+      const decoded = this.jwtService.decode(tokenPair.accessToken) as any;
       const user = await this.prisma.user.findUnique({
-        where: { id: payload.sub },
+        where: { id: decoded.sub },
         select: {
           id: true,
           email: true,
@@ -141,13 +149,102 @@ export class AuthService {
         }
       });
 
-      if (!user) {
-        throw new UnauthorizedException('User not found');
-      }
+      return {
+        accessToken: tokenPair.accessToken,
+        refreshToken: tokenPair.refreshToken,
+        user,
+        sessionInfo: {
+          expiresIn: this.configService.get('JWT_EXPIRES_IN', '15m'),
+          refreshExpiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN', '7d'),
+          inactivityTimeout: this.configService.get('SESSION_INACTIVITY_TIMEOUT', 30 * 60 * 1000),
+        }
+      };
 
-  return this.login(user);
-    } catch (e) {
+    } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
+
+  /**
+   * Logout seguro com revogação de tokens
+   */
+  async logout(userId: string, accessToken?: string, refreshToken?: string): Promise<{ success: boolean; message: string }> {
+    try {
+      // Revoga o refresh token se fornecido
+      if (refreshToken) {
+        await this.refreshTokenService.revokeRefreshToken(refreshToken, 'User logout');
+      }
+
+      // Adiciona access token à blacklist se fornecido
+      if (accessToken) {
+        try {
+          const decoded = this.jwtService.decode(accessToken) as any;
+          if (decoded && decoded.jti && decoded.exp) {
+            this.blacklistService.revokeToken(decoded.jti, decoded.exp, 'User logout');
+          }
+        } catch (error) {
+          // Token pode já estar inválido, continua
+        }
+      }
+
+      // Remove/expira a sessão
+      this.sessionService.removeSession(userId);
+
+      return {
+        success: true,
+        message: 'Logout realizado com sucesso'
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Erro durante logout'
+      };
+    }
+  }
+
+  /**
+   * Logout de todas as sessões do usuário
+   */
+  async logoutAll(userId: string): Promise<{ success: boolean; tokensRevoked: number }> {
+    try {
+      // Revoga todos os refresh tokens do usuário
+      const tokensRevoked = await this.refreshTokenService.revokeAllUserRefreshTokens(userId, 'Logout all sessions');
+
+      // Remove sessão ativa
+      this.sessionService.removeSession(userId);
+
+      return {
+        success: true,
+        tokensRevoked
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        tokensRevoked: 0
+      };
+    }
+  }
+
+  /**
+   * Verifica se um usuário tem sessão ativa
+   */
+  isUserSessionActive(userId: string): boolean {
+    return this.sessionService.isSessionActive(userId);
+  }
+
+  /**
+   * Obtém informações da sessão do usuário
+   */
+  getUserSessionInfo(userId: string): any {
+    return this.sessionService.getSessionInfo(userId);
+  }
+
+  /**
+   * Obtém tempo restante da sessão
+   */
+  getSessionTimeRemaining(userId: string): number | null {
+    return this.sessionService.getTimeUntilExpiration(userId);
   }
 }

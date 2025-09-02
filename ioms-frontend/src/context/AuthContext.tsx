@@ -29,8 +29,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const checkAuth = async () => {
       try {
         if (authService.isAuthenticated()) {
-          const currentUser = await authService.getCurrentUser();
-          setUser(normalizeUserRole(currentUser));
+          // Primeiro tenta buscar do localStorage
+          const storedUser = authService.getStoredUser();
+          if (storedUser) {
+            setUser(normalizeUserRole(storedUser));
+          } else {
+            // Se não tem no localStorage, busca do servidor
+            const currentUser = await authService.getCurrentUser();
+            setUser(normalizeUserRole(currentUser));
+          }
         }
       } catch (error) {
         console.error('Erro ao verificar autenticação:', error);
@@ -61,7 +68,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setIsLoading(true);
       const response = await authService.login(credentials);
-      authService.setTokens(response.accessToken, response.refreshToken);
+      // O authService.login já salva tokens e usuário, apenas definir no contexto
       setUser(normalizeUserRole(response.user));
     } catch (error) {
       console.error('Erro no login:', error);
@@ -75,7 +82,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setIsLoading(true);
       const response = await authService.register(data);
-      authService.setTokens(response.accessToken, response.refreshToken);
+      // O authService já deve salvar tokens e usuário
       setUser(normalizeUserRole(response.user));
     } catch (error) {
       console.error('Erro no registro:', error);

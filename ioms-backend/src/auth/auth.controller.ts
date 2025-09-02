@@ -1,10 +1,11 @@
 // src/auth/auth.controller.ts
-import { Body, Controller, Post, Get, Request, HttpCode, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Post, Get, Request, HttpCode, HttpStatus, UsePipes, ValidationPipe, Req, Headers } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterAdminDto } from './dto/register-admin.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from '../shared/decorators/public.decorator';
 import { LoginResponseDto } from './dto/login-response.dto';
 
@@ -26,6 +27,7 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 tentativas por minuto para login
   @ApiOperation({ summary: 'Authenticate user' })
   @ApiBody({ type: LoginDto })
   @ApiResponse({ 
@@ -41,7 +43,7 @@ export class AuthController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Validation error' 
   })
-  async login(@Body() loginDto: LoginDto) {
+  async login(@Body() loginDto: LoginDto, @Req() req: any) {
     const user = await this.authService.validateUser(loginDto.email, loginDto.password);
     if (!user) {
       return { 
@@ -49,7 +51,12 @@ export class AuthController {
         message: 'Invalid credentials' 
       };
     }
-    return this.authService.login(user);
+    
+    // Captura informações da requisição para auditoria
+    const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
+    const userAgent = req.get('User-Agent') || 'unknown';
+    
+    return this.authService.login(user, ipAddress, userAgent);
   }
 
   @Public()
@@ -82,18 +89,124 @@ export class AuthController {
   @Public()
   @Post('refresh-token')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiOperation({ summary: 'Refresh access token with rotation' })
   @ApiBody({ type: RefreshTokenDto })
   @ApiResponse({ 
     status: HttpStatus.OK,
-    description: 'Token refreshed',
+    description: 'Token refreshed with rotation',
     type: LoginResponseDto
   })
   @ApiResponse({ 
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid refresh token' 
   })
-  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.refreshToken(refreshTokenDto.refresh_token);
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto, @Req() req: any) {
+    const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
+    return this.authService.refreshToken(refreshTokenDto.refresh_token, ipAddress);
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Logout user and revoke tokens' })
+  @ApiResponse({ 
+    status: HttpStatus.OK,
+    description: 'Logout successful',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' }
+      }
+    }
+  })
+  async logout(
+    @Request() req: any,
+    @Headers('authorization') authHeader?: string,
+    @Body() body?: { refreshToken?: string }
+  ) {
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return {
+        success: false,
+        message: 'User not authenticated'
+      };
+    }
+
+    // Extrai o token do header Authorization
+    const accessToken = authHeader?.replace('Bearer ', '');
+    const refreshToken = body?.refreshToken;
+
+    return this.authService.logout(userId, accessToken, refreshToken);
+  }
+
+  @Post('logout-all')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Logout from all sessions and revoke all tokens' })
+  @ApiResponse({ 
+    status: HttpStatus.OK,
+    description: 'All sessions terminated',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        tokensRevoked: { type: 'number' }
+      }
+    }
+  })
+  async logoutAll(@Request() req: any) {
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return {
+        success: false,
+        tokensRevoked: 0
+      };
+    }
+
+    return this.authService.logoutAll(userId);
+  }
+
+  @Get('session-status')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current session status and remaining time' })
+  @ApiResponse({ 
+    status: HttpStatus.OK,
+    description: 'Session status information',
+    schema: {
+      type: 'object',
+      properties: {
+        isActive: { type: 'boolean' },
+        timeRemaining: { type: 'number', nullable: true },
+        sessionInfo: { type: 'object' }
+      }
+    }
+  })
+  async getSessionStatus(@Request() req: any) {
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return {
+        isActive: false,
+        timeRemaining: null,
+        sessionInfo: null
+      };
+    }
+
+    const isActive = this.authService.isUserSessionActive(userId);
+    const timeRemaining = this.authService.getSessionTimeRemaining(userId);
+    const sessionInfo = this.authService.getUserSessionInfo(userId);
+
+    return {
+      isActive,
+      timeRemaining,
+      sessionInfo: sessionInfo ? {
+        lastActivity: sessionInfo.lastActivity,
+        ipAddress: sessionInfo.ipAddress,
+        userAgent: sessionInfo.userAgent,
+      } : null
+    };
   }
 }

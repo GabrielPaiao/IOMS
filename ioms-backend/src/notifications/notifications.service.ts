@@ -1,12 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma/prisma.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationFiltersDto } from './dto/notification-filters.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
+import { EventEmitter } from 'events';
 
 @Injectable()
-export class NotificationsService {
-  constructor(private readonly prisma: PrismaService) {}
+export class NotificationsService extends EventEmitter {
+  private gateway: any; // Será injetado pelo gateway
+
+  constructor(private readonly prisma: PrismaService) {
+    super();
+  }
+
+  setGateway(gateway: any) {
+    this.gateway = gateway;
+  }
 
   async createNotification(createNotificationDto: CreateNotificationDto) {
     const { recipientId, type, title, message, priority, metadata } = createNotificationDto;
@@ -48,7 +57,7 @@ export class NotificationsService {
     const where: any = {};
 
     if (filters.read !== undefined) {
-      where.read = filters.read;
+      where.isRead = filters.read;
     }
 
     if (filters.type) {
@@ -134,7 +143,7 @@ export class NotificationsService {
       throw new NotFoundException('Notification not found');
     }
 
-    return this.prisma.notification.update({
+    const updatedNotification = await this.prisma.notification.update({
       where: { id },
       data: { isRead: true, readAt: new Date() },
       include: {
@@ -143,6 +152,13 @@ export class NotificationsService {
         }
       }
     });
+
+    // Notificar WebSocket sobre a atualização
+    if (this.gateway) {
+      this.gateway.notifyReadCountUpdate(notification.userId, 1);
+    }
+
+    return updatedNotification;
   }
 
   async markAllAsRead(recipientId: string) {
@@ -150,6 +166,11 @@ export class NotificationsService {
       where: { userId: recipientId, isRead: false },
       data: { isRead: true, readAt: new Date() }
     });
+
+    // Notificar WebSocket sobre a atualização
+    if (this.gateway) {
+      this.gateway.notifyAllRead(recipientId);
+    }
 
     return { updatedCount: result.count };
   }
@@ -309,8 +330,8 @@ export class NotificationsService {
   }
 
   private async sendRealTimeNotification(notification: any) {
-    // Implementar envio de notificação em tempo real
-    // Por exemplo, via WebSocket, Server-Sent Events, ou similar
+    // Emitir evento para que o WebSocket Gateway possa capturar e enviar
+    this.emit('notificationCreated', notification);
     console.log(`Real-time notification sent: ${notification.title}`);
   }
 

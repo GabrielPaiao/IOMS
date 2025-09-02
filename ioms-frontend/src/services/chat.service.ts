@@ -1,6 +1,7 @@
 // src/services/chat.service.ts
 import { api } from './api';
 import { io, Socket } from 'socket.io-client';
+import { config } from '../../config';
 
 export interface ChatMessage {
   id: string;
@@ -85,7 +86,7 @@ class ChatService {
     try {
       console.log('[FRONTEND] Initializing WebSocket with token:', token ? 'Token provided' : 'No token');
       
-      this.socket = io('http://localhost:3001/chat', {
+      this.socket = io(`${config.WS_BASE_URL}/chat`, {
         auth: {
           token: token
         },

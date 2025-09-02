@@ -1,14 +1,14 @@
 // src/types/user.ts
 export type User = {
   id: string;
-  name: string;
+  name?: string; // Opcional para compatibilidade
+  firstName: string;
+  lastName: string;
   email: string;
   role: 'dev' | 'key_user' | 'admin';
   location?: string; // Localização base do usuário
   locations: string[]; // Array de localizações (para compatibilidade)
-  companyId?: string;
-  firstName?: string;
-  lastName?: string;
+  companyId: string;
   companyName?: string;
   assignedApplications?: Array<{
     id: string;

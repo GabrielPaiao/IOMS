@@ -8,6 +8,9 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtBlacklistService } from './services/jwt-blacklist.service';
+import { SessionActivityService } from './services/session-activity.service';
+import { RefreshTokenService } from './services/refresh-token.service';
 import { Reflector } from '@nestjs/core';
 
 @Module({
@@ -47,6 +50,9 @@ import { Reflector } from '@nestjs/core';
     JwtStrategy,
     PrismaService,
     Reflector,
+    JwtBlacklistService,
+    SessionActivityService,
+    RefreshTokenService,
     {
       provide: 'APP_GUARD',
       useClass: JwtAuthGuard, // Guard global de autenticação

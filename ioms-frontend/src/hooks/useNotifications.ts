@@ -26,9 +26,19 @@ export function useNotifications() {
       setUnreadCount(prev => prev + 1);
     };
 
-    // Listener para notificações lidas
-    const handleNotificationRead = () => {
-      setUnreadCount(prev => Math.max(0, prev - 1));
+    // Listener para contador de não lidas inicial
+    const handleUnreadCount = (data: { count: number }) => {
+      setUnreadCount(data.count);
+    };
+
+    // Listener para atualização do contador
+    const handleUnreadCountUpdated = (data: { increment?: number; decrement?: number }) => {
+      if (data.increment) {
+        setUnreadCount(prev => prev + data.increment!);
+      }
+      if (data.decrement) {
+        setUnreadCount(prev => Math.max(0, prev - data.decrement!));
+      }
     };
 
     // Listener para todas as notificações marcadas como lidas
@@ -37,24 +47,30 @@ export function useNotifications() {
     };
 
     // Registrar listeners
+    notificationsService.on('new_notification', handleNewNotification);
+    notificationsService.on('unread_count', handleUnreadCount);
+    notificationsService.on('unread_count_updated', handleUnreadCountUpdated);
+    notificationsService.on('all_read', handleAllRead);
+
+    // Fallback listeners para compatibilidade
     notificationsService.on('outage', handleNewNotification);
     notificationsService.on('approval', handleNewNotification);
     notificationsService.on('conflict', handleNewNotification);
     notificationsService.on('reminder', handleNewNotification);
-    notificationsService.on('notification_read', handleNotificationRead);
-    notificationsService.on('all_read', handleAllRead);
 
     // Polling como fallback (a cada 30 segundos)
     const pollInterval = setInterval(loadUnreadCount, 30000);
 
     return () => {
       // Remover listeners
+      notificationsService.off('new_notification', handleNewNotification);
+      notificationsService.off('unread_count', handleUnreadCount);
+      notificationsService.off('unread_count_updated', handleUnreadCountUpdated);
+      notificationsService.off('all_read', handleAllRead);
       notificationsService.off('outage', handleNewNotification);
       notificationsService.off('approval', handleNewNotification);
       notificationsService.off('conflict', handleNewNotification);
       notificationsService.off('reminder', handleNewNotification);
-      notificationsService.off('notification_read', handleNotificationRead);
-      notificationsService.off('all_read', handleAllRead);
       
       clearInterval(pollInterval);
     };

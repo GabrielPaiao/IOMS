@@ -108,8 +108,30 @@ model User {
   createdChatConversations ChatConversation[]
   updatedApplications Application[] @relation("ApplicationUpdator")
   keyUserApplications ApplicationKeyUser[] @relation("ApplicationKeyUsers")
+  refreshTokens RefreshToken[]
 
   @@map("users")
+}
+
+model RefreshToken {
+  id            String    @id
+  userId        String    @map("user_id")
+  tokenHash     String    @map("token_hash")
+  expiresAt     DateTime  @map("expires_at")
+  isRevoked     Boolean   @default(false) @map("is_revoked")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  lastUsedAt    DateTime? @map("last_used_at")
+  revokedAt     DateTime? @map("revoked_at")
+  revokedReason String?   @map("revoked_reason")
+
+  // Relações
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Índices
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([isRevoked])
+  @@map("refresh_tokens")
 }
 
 model Company {

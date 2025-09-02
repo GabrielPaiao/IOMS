@@ -1,11 +1,15 @@
 // src/outages/outages.service.ts
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateOutageDto } from './dto/create-outage.dto';
 
 @Injectable()
 export class OutagesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async create(createOutageDto: CreateOutageDto, userId: string) {
     const { applicationId } = createOutageDto;
@@ -80,6 +84,43 @@ export class OutagesService {
         }
       },
     });
+
+    // Criar notificação para Key Users da aplicação (exceto o criador)
+    try {
+      const keyUsers = await this.prisma.applicationKeyUser.findMany({
+        where: {
+          applicationId: createOutageDto.applicationId,
+          user: { id: { not: userId } } // Excluir o criador
+        },
+        include: {
+          user: {
+            select: { id: true, firstName: true, lastName: true, email: true }
+          }
+        }
+      });
+
+      // Criar notificação para cada Key User
+      for (const keyUser of keyUsers) {
+        await this.notificationsService.createNotification({
+          recipientId: keyUser.user.id,
+          type: 'outage_approval_request',
+          title: `New Outage Request: ${outage.title}`,
+          message: `${outage.createdByUser.firstName} ${outage.createdByUser.lastName} has requested an outage for ${outage.application.name}. Please review and approve.`,
+          priority: outage.criticality === 'CRITICAL' ? 'high' : outage.criticality === 'HIGH' ? 'high' : 'normal',
+          metadata: {
+            outageId: outage.id,
+            applicationId: outage.applicationId,
+            applicationName: outage.application.name,
+            createdBy: outage.createdByUser.firstName + ' ' + outage.createdByUser.lastName,
+            criticality: outage.criticality,
+            scheduledStart: outage.scheduledStart,
+            scheduledEnd: outage.scheduledEnd
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error creating outage approval notifications:', error);
+    }
 
     return outage;
   }
@@ -466,6 +507,33 @@ export class OutagesService {
       },
     });
 
+    // Criar notificação para o criador do outage
+    try {
+      const approver = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { firstName: true, lastName: true }
+      });
+
+      await this.notificationsService.createNotification({
+        recipientId: outage.createdBy,
+        type: 'outage_approved',
+        title: `Outage Request Approved: ${outage.title}`,
+        message: `Your outage request "${outage.title}" for ${outage.application.name} has been approved by ${approver?.firstName} ${approver?.lastName}.`,
+        priority: 'normal',
+        metadata: {
+          outageId: id,
+          applicationId: outage.applicationId,
+          applicationName: outage.application.name,
+          approvedBy: `${approver?.firstName} ${approver?.lastName}`,
+          approvalReason: approvalData.reason,
+          scheduledStart: outage.scheduledStart,
+          scheduledEnd: outage.scheduledEnd
+        }
+      });
+    } catch (error) {
+      console.error('Error creating approval notification:', error);
+    }
+
     return updatedOutage;
   }
 
@@ -517,6 +585,33 @@ export class OutagesService {
         reason: rejectionData.reason || 'Outage rejected',
       },
     });
+
+    // Criar notificação para o criador do outage
+    try {
+      const rejector = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { firstName: true, lastName: true }
+      });
+
+      await this.notificationsService.createNotification({
+        recipientId: outage.createdBy,
+        type: 'outage_rejected',
+        title: `Outage Request Rejected: ${outage.title}`,
+        message: `Your outage request "${outage.title}" for ${outage.application.name} has been rejected by ${rejector?.firstName} ${rejector?.lastName}. Reason: ${rejectionData.reason || 'No reason provided'}`,
+        priority: 'high',
+        metadata: {
+          outageId: id,
+          applicationId: outage.applicationId,
+          applicationName: outage.application.name,
+          rejectedBy: `${rejector?.firstName} ${rejector?.lastName}`,
+          rejectionReason: rejectionData.reason,
+          scheduledStart: outage.scheduledStart,
+          scheduledEnd: outage.scheduledEnd
+        }
+      });
+    } catch (error) {
+      console.error('Error creating rejection notification:', error);
+    }
 
     return updatedOutage;
   }
