@@ -3,8 +3,8 @@ export const config = {
   // URL base da API
   API_BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
   
-  // URL base do WebSocket
-  WS_BASE_URL: import.meta.env.VITE_WS_URL || 'ws://localhost:3000',
+  // URL base do WebSocket (Socket.IO usa HTTP/HTTPS, não WS)
+  WS_BASE_URL: import.meta.env.VITE_WS_URL || 'http://localhost:3000',
   
   // Configurações da aplicação
   APP_NAME: 'IOMS',

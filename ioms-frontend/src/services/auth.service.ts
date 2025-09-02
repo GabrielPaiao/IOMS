@@ -27,7 +27,19 @@ export interface RefreshTokenRequest {
 
 class AuthService {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
+    console.log('DEBUG: Login called with:', credentials.email);
     const response = await api.post<LoginResponse>('/auth/login', credentials);
+    console.log('DEBUG: Login response:', response.data);
+    
+    if (response.data) {
+      // Salvar tokens e usuário
+      this.setTokens(
+        response.data.accessToken,
+        response.data.refreshToken,
+        response.data.user
+      );
+    }
+    
     return response.data;
   }
 
@@ -39,6 +51,16 @@ class AuthService {
       lastName: data.lastName,
       companyName: data.companyName,
     });
+    
+    if (response.data) {
+      // Salvar tokens e usuário
+      this.setTokens(
+        response.data.accessToken,
+        response.data.refreshToken,
+        response.data.user
+      );
+    }
+    
     return response.data;
   }
 
@@ -68,9 +90,16 @@ class AuthService {
   }
 
   // Métodos auxiliares para gerenciar tokens
-  setTokens(accessToken: string, refreshToken: string): void {
+  setTokens(accessToken: string, refreshToken: string, user?: User): void {
+    console.log('DEBUG: setTokens called with user:', user);
     localStorage.setItem(config.TOKEN_STORAGE_KEY, accessToken);
     localStorage.setItem(config.REFRESH_TOKEN_STORAGE_KEY, refreshToken);
+    
+    // Salvar usuário se fornecido
+    if (user) {
+      console.log('DEBUG: Saving user to localStorage:', JSON.stringify(user));
+      localStorage.setItem(config.USER_STORAGE_KEY, JSON.stringify(user));
+    }
   }
 
   getAccessToken(): string | null {
@@ -79,6 +108,19 @@ class AuthService {
 
   getRefreshToken(): string | null {
     return localStorage.getItem(config.REFRESH_TOKEN_STORAGE_KEY);
+  }
+
+  getStoredUser(): User | null {
+    const storedUser = localStorage.getItem(config.USER_STORAGE_KEY);
+    if (storedUser) {
+      try {
+        return JSON.parse(storedUser);
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+        return null;
+      }
+    }
+    return null;
   }
 
   isAuthenticated(): boolean {

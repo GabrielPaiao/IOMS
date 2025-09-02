@@ -1,0 +1,42 @@
+# Test files and debugging
+test-*.html
+test-*.js
+check-*.js
+debug.txt
+*.debug
+*.tmp
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dependencies (already covered in subprojects)
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.tgz
+
+# Runtime
+.cache/
+.temp/

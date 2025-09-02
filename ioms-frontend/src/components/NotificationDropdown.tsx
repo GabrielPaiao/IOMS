@@ -27,7 +27,6 @@ export default function NotificationDropdown({ className = '' }: NotificationDro
       setLoading(true);
       const notificationsData = await notificationsService.getNotifications({ 
         recipientId: user.id, 
-        read: false, 
         limit: 10 
       });
       
