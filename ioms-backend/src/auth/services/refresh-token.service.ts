@@ -49,13 +49,10 @@ export class RefreshTokenService {
       sub: userId,
       type: 'access',
       jti: this.generateTokenId(),
-      iss: this.configService.get('JWT_ISSUER', 'ioms'),
-      aud: this.configService.get('JWT_AUDIENCE', 'ioms-client'),
     };
 
     const accessToken = this.jwtService.sign(accessTokenPayload, {
       expiresIn: this.configService.get('JWT_EXPIRES_IN', '15m'), // Reduzido para 15 minutos
-      secret: this.configService.get('JWT_SECRET'),
     });
 
     // Gera novo refresh token
@@ -63,8 +60,6 @@ export class RefreshTokenService {
       sub: userId,
       type: 'refresh',
       jti: this.generateTokenId(),
-      iss: this.configService.get('JWT_ISSUER', 'ioms'),
-      aud: this.configService.get('JWT_AUDIENCE', 'ioms-client'),
     };
 
     const refreshToken = this.jwtService.sign(refreshTokenPayload, {
