@@ -109,6 +109,7 @@ model User {
   updatedApplications Application[] @relation("ApplicationUpdator")
   keyUserApplications ApplicationKeyUser[] @relation("ApplicationKeyUsers")
   refreshTokens RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
 }
@@ -432,4 +433,18 @@ model Invitation {
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@map("invitations")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  // Relações
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }

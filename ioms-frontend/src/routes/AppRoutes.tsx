@@ -18,6 +18,8 @@ import EditSectionPage from "../pages/EditSectionPage";
 import InviteUserPage from "../pages/InviteUserPage";
 import RegisterPage from "../pages/RegisterPage";
 import RegisterWithTokenPage from "../pages/RegisterWithTokenPage";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/ResetPasswordPage";
 import NewApplicationPage from "../pages/NewApplicationPage";
 import EditApplicationPage from "../pages/EditApplicationPage";
 import NotificationsPage from "../pages/NotificationsPage";
@@ -41,6 +43,8 @@ export function AppRoutes() {
         {/* Rotas públicas */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/auth/register" element={<RegisterWithTokenPage />} />
 
         {/* Rotas protegidas */}

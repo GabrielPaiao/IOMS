@@ -57,6 +57,20 @@ export class JwtBlacklistService {
   }
 
   /**
+   * Verifica se um token completo está na blacklist (alias para isTokenRevoked)
+   */
+  isTokenBlacklisted(tokenId: string): boolean {
+    return this.isTokenRevoked(tokenId);
+  }
+
+  /**
+   * Adiciona um token à blacklist (alias para revokeToken)
+   */
+  addToBlacklist(tokenId: string, expirationDate: Date, reason?: string): void {
+    this.revokeToken(tokenId, Math.floor(expirationDate.getTime() / 1000), reason);
+  }
+
+  /**
    * Revoga todos os tokens de um usuário
    */
   revokeAllUserTokens(userId: string, reason = 'User logout/security'): void {

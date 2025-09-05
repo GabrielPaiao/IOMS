@@ -36,7 +36,7 @@ export default function MyApplicationsPage() {
       const data = await usersService.getMyApplications();
       setApplications(data);
     } catch (error) {
-      console.error('Erro ao carregar aplicações:', error);
+      console.error('Error loading applications:', error);
     } finally {
       setIsLoading(false);
     }
@@ -98,8 +98,8 @@ export default function MyApplicationsPage() {
       setEditingEnvironments({ ...editingEnvironments, [appId]: false });
       setEditingData({ ...editingData, [appId]: { ...editingData[appId], environments: undefined } });
     } catch (error) {
-      console.error('Erro ao salvar ambientes:', error);
-      alert('Erro ao salvar ambientes. Tente novamente.');
+      console.error('Error saving environments:', error);
+      alert('Error saving environments. Please try again.');
     }
   };
 
@@ -115,7 +115,7 @@ export default function MyApplicationsPage() {
       setEditingKeyUsers({ ...editingKeyUsers, [appId]: false });
       setEditingData({ ...editingData, [appId]: { ...editingData[appId], keyUsers: undefined } });
     } catch (error) {
-      console.error('Erro ao salvar key users:', error);
+      console.error('Error saving key users:', error);
     }
   };
 
@@ -162,14 +162,14 @@ export default function MyApplicationsPage() {
 
   const addKeyUser = async (appId: number, email: string) => {
     if (!email || !email.includes('@')) {
-      alert('Email inválido');
+      alert('Invalid email');
       return;
     }
     
     try {
       const keyUsers = [...(editingData[appId]?.keyUsers || [])];
       if (keyUsers.some(ku => ku.user.email === email)) {
-        alert('Usuário já é key user desta aplicação');
+        alert('User is already a key user of this application');
         return;
       }
 
@@ -180,8 +180,8 @@ export default function MyApplicationsPage() {
         [appId]: { ...editingData[appId], keyUsers }
       });
     } catch (error) {
-      console.error('Erro ao adicionar usuário:', error);
-      alert('Erro ao adicionar usuário');
+      console.error('Error adding user:', error);
+      alert('Error adding user');
     }
   };
 
@@ -195,17 +195,17 @@ export default function MyApplicationsPage() {
   };
 
   const handleDeleteApplication = async (appId: number, appName: string) => {
-    if (!confirm(`Tem certeza que deseja excluir a aplicação "${appName}"? Esta ação não pode ser desfeita.`)) {
+    if (!confirm(`Are you sure you want to delete the application "${appName}"? This action cannot be undone.`)) {
       return;
     }
 
     try {
       await applicationsService.deleteApplication(appId.toString());
-      alert('Aplicação excluída com sucesso!');
+      alert('Application deleted successfully!');
       loadApplications(); // Recarrega a lista
     } catch (error) {
-      console.error('Erro ao excluir aplicação:', error);
-      alert('Erro ao excluir aplicação. Tente novamente.');
+      console.error('Error deleting application:', error);
+      alert('Error deleting application. Please try again.');
     }
   };
 
@@ -214,7 +214,7 @@ export default function MyApplicationsPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando aplicações...</p>
+          <p className="mt-4 text-gray-600">Loading applications...</p>
         </div>
       </div>
     );
@@ -226,9 +226,9 @@ export default function MyApplicationsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Minhas Aplicações</h1>
+              <h1 className="text-3xl font-bold text-gray-900">My Applications</h1>
               <p className="mt-2 text-gray-600">
-                Gerencie suas aplicações do sistema IOMS
+                Manage your IOMS system applications
               </p>
             </div>
             {isAdmin() && (
@@ -237,13 +237,13 @@ export default function MyApplicationsPage() {
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
                 <Plus size={20} className="mr-2" />
-                Nova Aplicação
+                New Application
               </button>
             )}
             {!isAdmin() && (
               <div className="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-md">
-                <p>Apenas administradores podem</p>
-                <p>criar novas aplicações</p>
+                <p>Only administrators can</p>
+                <p>create new applications</p>
               </div>
             )}
           </div>
@@ -259,7 +259,7 @@ export default function MyApplicationsPage() {
             </div>
             <input
               type="text"
-              placeholder="Buscar por nome ou descrição..."
+              placeholder="Search by name or description..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
@@ -272,12 +272,12 @@ export default function MyApplicationsPage() {
           <div className="text-center py-12">
             <ClipboardText size={48} className="mx-auto text-gray-400 mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {searchTerm ? 'Nenhuma aplicação encontrada' : 'Nenhuma aplicação encontrada'}
+              {searchTerm ? 'No applications found' : 'No applications found'}
             </h3>
             <p className="text-gray-600 mb-6">
               {searchTerm 
-                ? 'Tente ajustar os termos de busca ou limpar os filtros.'
-                : 'Você não possui aplicações registradas no sistema.'
+                ? 'Try adjusting search terms or clearing filters.'
+                : 'You have no registered applications in the system.'
               }
             </p>
             {isAdmin() && (
@@ -319,7 +319,7 @@ export default function MyApplicationsPage() {
                           className="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md text-sm text-white bg-indigo-600 hover:bg-indigo-700"
                         >
                           <PencilSimple size={16} className="mr-1" />
-                          Editar
+                          Edit
                         </button>
                         <button
                           onClick={() => handleDeleteApplication(app.id, app.name)}
@@ -337,13 +337,13 @@ export default function MyApplicationsPage() {
                   {/* Environments */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-lg font-medium text-gray-900">Ambientes</h4>
+                      <h4 className="text-lg font-medium text-gray-900">Environments</h4>
                       {!editingEnvironments[app.id] && isAdmin() && (
                         <button
                           onClick={() => startEditingEnvironments(app.id)}
                           className="text-sm text-indigo-600 hover:text-indigo-700"
                         >
-                          Editar
+                          Edit
                         </button>
                       )}
                     </div>
@@ -354,14 +354,14 @@ export default function MyApplicationsPage() {
                           <div key={index} className="flex items-center space-x-2">
                             <input
                               type="text"
-                              placeholder="Nome"
+                              placeholder="Name"
                               value={env.name || env.environment || ''}
                               onChange={(e) => updateEnvironment(app.id, index, 'name', e.target.value)}
                               className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
                             />
                             <input
                               type="text"
-                              placeholder="Descrição"
+                              placeholder="Description"
                               value={env.description || ''}
                               onChange={(e) => updateEnvironment(app.id, index, 'description', e.target.value)}
                               className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
@@ -379,7 +379,7 @@ export default function MyApplicationsPage() {
                             onClick={() => addEnvironment(app.id)}
                             className="text-sm text-indigo-600 hover:text-indigo-700"
                           >
-                            + Adicionar Ambiente
+                            + Add Environment
                           </button>
                         </div>
                         <div className="flex space-x-2 pt-2">
@@ -388,14 +388,14 @@ export default function MyApplicationsPage() {
                             className="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md text-sm text-white bg-green-600 hover:bg-green-700"
                           >
                             <Check size={16} className="mr-1" />
-                            Salvar
+                            Save
                           </button>
                           <button
                             onClick={() => cancelEditingEnvironments(app.id)}
                             className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50"
                           >
                             <X size={16} className="mr-1" />
-                            Cancelar
+                            Cancel
                           </button>
                         </div>
                       </div>
@@ -425,7 +425,7 @@ export default function MyApplicationsPage() {
                           onClick={() => startEditingKeyUsers(app.id)}
                           className="text-sm text-indigo-600 hover:text-indigo-700"
                         >
-                          Editar
+                          Edit
                         </button>
                       )}
                     </div>
@@ -468,7 +468,7 @@ export default function MyApplicationsPage() {
                             }}
                             className="text-sm text-indigo-600 hover:text-indigo-700 px-3 py-2 border border-gray-300 rounded-md"
                           >
-                            Adicionar
+                            Add
                           </button>
                         </div>
                         <div className="flex space-x-2 pt-2">
@@ -477,14 +477,14 @@ export default function MyApplicationsPage() {
                             className="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md text-sm text-white bg-green-600 hover:bg-green-700"
                           >
                             <Check size={16} className="mr-1" />
-                            Salvar
+                            Save
                           </button>
                           <button
                             onClick={() => cancelEditingKeyUsers(app.id)}
                             className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50"
                           >
                             <X size={16} className="mr-1" />
-                            Cancelar
+                            Cancel
                           </button>
                         </div>
                       </div>
@@ -497,7 +497,7 @@ export default function MyApplicationsPage() {
                           </div>
                         ))}
                         {(!app.keyUsers || app.keyUsers.length === 0) && (
-                          <p className="text-gray-500 text-sm italic">Nenhum key user configurado</p>
+                          <p className="text-gray-500 text-sm italic">No key users configured</p>
                         )}
                       </div>
                     )}
