@@ -1,0 +1,46 @@
+graph TB
+    %% Communication Actors
+    Dev[Developer<br/>👨‍💻]
+    KeyUser[Key User<br/>👤]
+
+    %% Extended Outage Operations
+    subgraph "Outage Operations"
+        UC11[Edit Outage Request]
+        UC14[Cancel Outage Request]
+        UC18[Request Changes]
+        UC19[View Approval History]
+    end
+
+    %% Communication Features
+    subgraph "Communication"
+        UC20[Send Chat Messages]
+        UC22[View Message History]
+        UC31[Receive Notifications]
+    end
+
+    %% Actor Relationships
+    Dev --> UC11
+    Dev --> UC14
+    Dev --> UC20
+    Dev --> UC22
+    Dev --> UC31
+
+    KeyUser --> UC18
+    KeyUser --> UC19
+    KeyUser --> UC20
+    KeyUser --> UC22
+    KeyUser --> UC31
+
+    %% System relationships
+    UC18 -.-> UC11
+    UC20 -.-> UC31
+    UC19 -.-> UC22
+
+    %% Styling
+    classDef actor fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000
+    classDef operations fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#000
+    classDef communication fill:#f1f8e9,stroke:#558b2f,stroke-width:1px,color:#000
+
+    class Dev,KeyUser actor
+    class UC11,UC14,UC18,UC19 operations
+    class UC20,UC22,UC31 communication

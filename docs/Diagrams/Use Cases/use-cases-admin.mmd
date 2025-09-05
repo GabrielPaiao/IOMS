@@ -1,0 +1,56 @@
+graph TB
+    %% Administrative Actors
+    Admin[System Admin<br/>⚙️]
+    Dev[Developer<br/>👨‍💻]
+
+    %% User Management
+    subgraph "User & Access Management"
+        UC02[Register New User]
+        UC04[Manage User Permissions]
+    end
+
+    %% Company & System Setup
+    subgraph "Company & System Setup"
+        UC05[Create Company]
+        UC06[Manage Company Settings]
+        UC07[Register Applications/Systems]
+        UC08[Configure System Criticality]
+        UC09[Assign Key Users to Systems]
+    end
+
+    %% Notifications Setup
+    subgraph "Notification Management"
+        UC21[Configure Notifications]
+        UC23[Setup Email Templates]
+    end
+
+    %% Actor Relationships
+    Admin --> UC02
+    Admin --> UC04
+    Admin --> UC05
+    Admin --> UC06
+    Admin --> UC07
+    Admin --> UC08
+    Admin --> UC09
+    Admin --> UC21
+    Admin --> UC23
+
+    Dev --> UC07
+    Dev --> UC08
+
+    %% System relationships
+    UC02 -.-> UC04
+    UC05 -.-> UC06
+    UC07 -.-> UC08
+    UC08 -.-> UC09
+
+    %% Styling
+    classDef actor fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000
+    classDef management fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#000
+    classDef auth fill:#e8f5e8,stroke:#2e7d32,stroke-width:1px,color:#000
+    classDef notification fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#000
+
+    class Admin,Dev actor
+    class UC02,UC04 auth
+    class UC05,UC06,UC07,UC08,UC09 management
+    class UC21,UC23 notification

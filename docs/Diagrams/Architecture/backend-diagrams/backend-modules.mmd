@@ -1,0 +1,73 @@
+graph TB
+    %% Backend Modules Structure
+    subgraph "NestJS Application"
+        AppModule[App Module<br/>Main Application Entry]
+    end
+
+    subgraph "Core Modules"
+        AuthModule[Authentication Module<br/>JWT & Guards]
+        UsersModule[Users Module<br/>User Management]
+        CompaniesModule[Companies Module<br/>Multi-tenant Support]
+    end
+
+    subgraph "Business Logic Modules"
+        OutagesModule[Outages Module<br/>Maintenance Requests]
+        ApplicationsModule[Applications Module<br/>System Management]
+        ApprovalModule[Approval Workflows<br/>Request Processing]
+    end
+
+    subgraph "Communication Modules"
+        ChatModule[Chat Module<br/>Real-time Messaging]
+        NotificationsModule[Notifications Module<br/>Email & Alerts]
+        MailModule[Mail Module<br/>SMTP Service]
+    end
+
+    subgraph "Analytics & Reporting"
+        DashboardModule[Dashboard Module<br/>Metrics & KPIs]
+        ChangeHistoryModule[Change History<br/>Audit Trail]
+    end
+
+    subgraph "Shared Services"
+        ConfigModule[Configuration<br/>Environment Variables]
+        DatabaseModule[Database Module<br/>TypeORM Integration]
+        ValidationService[Validation Service<br/>Business Rules]
+    end
+
+    %% Module Dependencies
+    AppModule --> AuthModule
+    AppModule --> UsersModule
+    AppModule --> CompaniesModule
+    AppModule --> OutagesModule
+    AppModule --> ApplicationsModule
+    AppModule --> ApprovalModule
+    AppModule --> ChatModule
+    AppModule --> NotificationsModule
+    AppModule --> DashboardModule
+
+    AuthModule --> DatabaseModule
+    UsersModule --> DatabaseModule
+    CompaniesModule --> DatabaseModule
+    OutagesModule --> ValidationService
+    OutagesModule --> DatabaseModule
+    ApplicationsModule --> DatabaseModule
+    ApprovalModule --> NotificationsModule
+    ApprovalModule --> DatabaseModule
+    ChatModule --> DatabaseModule
+    NotificationsModule --> MailModule
+    DashboardModule --> DatabaseModule
+    ChangeHistoryModule --> DatabaseModule
+
+    %% Styling
+    classDef core fill:#61dafb,stroke:#333,stroke-width:2px,color:#000
+    classDef business fill:#e0234e,stroke:#333,stroke-width:2px,color:#fff
+    classDef communication fill:#ff9800,stroke:#333,stroke-width:2px,color:#000
+    classDef analytics fill:#9c27b0,stroke:#333,stroke-width:2px,color:#fff
+    classDef shared fill:#4caf50,stroke:#333,stroke-width:2px,color:#000
+    classDef app fill:#f44336,stroke:#333,stroke-width:2px,color:#fff
+
+    class AuthModule,UsersModule,CompaniesModule core
+    class OutagesModule,ApplicationsModule,ApprovalModule business
+    class ChatModule,NotificationsModule,MailModule communication
+    class DashboardModule,ChangeHistoryModule analytics
+    class ConfigModule,DatabaseModule,ValidationService shared
+    class AppModule app

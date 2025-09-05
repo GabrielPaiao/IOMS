@@ -1,0 +1,65 @@
+graph TB
+    %% High-Level Architecture Overview
+    subgraph "Client Layer"
+        Users[Users<br/>Developers & Key Users]
+        Browser[Web Browser<br/>Chrome, Firefox, Safari]
+    end
+
+    subgraph "Presentation Layer"
+        Frontend[React.js Frontend<br/>TypeScript + Tailwind CSS]
+        UI[User Interface<br/>Responsive Design]
+    end
+
+    subgraph "Application Layer"
+        Backend[NestJS Backend<br/>TypeScript + Node.js]
+        API[REST API<br/>Authentication & Business Logic]
+        WS[WebSocket<br/>Real-time Chat]
+    end
+
+    subgraph "Data Layer"
+        Database[(PostgreSQL<br/>Relational Database)]
+    end
+
+    subgraph "External Services"
+        Email[Email Service<br/>SMTP Integration]
+        Monitoring[Monitoring APIs<br/>Future Integration]
+    end
+
+    subgraph "Infrastructure (Planned)"
+        Vercel[Vercel<br/>Frontend Hosting]
+        Render[Render<br/>Backend & Database]
+        CloudFlare[Cloudflare<br/>DNS & CDN]
+    end
+
+    %% Connections
+    Users --> Browser
+    Browser --> Frontend
+    Frontend --> UI
+    UI --> API
+    UI --> WS
+    API --> Backend
+    WS --> Backend
+    Backend --> Database
+    Backend --> Email
+    Backend --> Monitoring
+    
+    %% Infrastructure connections
+    Frontend -.-> Vercel
+    Backend -.-> Render
+    Database -.-> Render
+    Vercel -.-> CloudFlare
+
+    %% Styling
+    classDef client fill:#f9f9f9,stroke:#333,stroke-width:2px,color:#000
+    classDef frontend fill:#61dafb,stroke:#333,stroke-width:2px,color:#000
+    classDef backend fill:#e0234e,stroke:#333,stroke-width:2px,color:#fff
+    classDef database fill:#336791,stroke:#333,stroke-width:2px,color:#fff
+    classDef external fill:#ff9800,stroke:#333,stroke-width:2px,color:#000
+    classDef infrastructure fill:#4caf50,stroke:#333,stroke-width:2px,color:#000
+
+    class Users,Browser client
+    class Frontend,UI frontend
+    class Backend,API,WS backend
+    class Database database
+    class Email,Monitoring external
+    class Vercel,Render,CloudFlare infrastructure

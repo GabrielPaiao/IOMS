@@ -1,0 +1,93 @@
+classDiagram
+    %% Core Domain Classes
+    class User {
+        +String id
+        +String email
+        +String firstName
+        +String lastName
+        +UserRole role
+        +String companyId
+        +Boolean isActive
+        +DateTime createdAt
+        +DateTime updatedAt
+        
+        +login() Boolean
+        +updateProfile() User
+        +getAssignedApplications() Application[]
+    }
+    
+    class Company {
+        +String id
+        +String name
+        +String description
+        +String domain
+        +DateTime createdAt
+        +DateTime updatedAt
+        
+        +addUser(User) Boolean
+        +getUsers() User[]
+    }
+    
+    class Application {
+        +String id
+        +String name
+        +String description
+        +String companyId
+        +String createdBy
+        +DateTime createdAt
+        +DateTime updatedAt
+        
+        +assignKeyUser(String) Boolean
+        +getOutages() Outage[]
+    }
+    
+    class Outage {
+        +String id
+        +String applicationId
+        +String title
+        +String reason
+        +DateTime scheduledStart
+        +DateTime scheduledEnd
+        +CriticalityLevel criticality
+        +OutageStatus status
+        +String createdBy
+        +DateTime createdAt
+        +DateTime updatedAt
+        
+        +approve(String) Boolean
+        +reject(String) Boolean
+        +hasConflict() Boolean
+    }
+    
+    %% Enumerations
+    class UserRole {
+        <<enumeration>>
+        ADMIN
+        KEY_USER  
+        DEV
+    }
+    
+    class OutageStatus {
+        <<enumeration>>
+        PENDING
+        APPROVED
+        REJECTED
+        CANCELLED
+        COMPLETED
+    }
+    
+    class CriticalityLevel {
+        <<enumeration>>
+        LOW
+        MEDIUM
+        HIGH
+        CRITICAL
+    }
+    
+    %% Relationships
+    Company "1" --> "*" User
+    Company "1" --> "*" Application  
+    Company "1" --> "*" Outage
+    User "1" --> "*" Application
+    User "1" --> "*" Outage
+    Application "1" --> "*" Outage

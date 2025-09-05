@@ -1,0 +1,58 @@
+graph TB
+    %% Monitoring Actors
+    Admin[System Admin<br/>⚙️]
+    Dev[Developer<br/>👨‍💻]
+    KeyUser[Key User<br/>👤]
+
+    %% Dashboard & Metrics
+    subgraph "Dashboard & Analytics"
+        UC24[View Dashboard Metrics]
+        UC27[Monitor Outage Status]
+        UC30[View System Health]
+    end
+
+    %% Reporting
+    subgraph "Reports & Audit"
+        UC25[Generate Reports]
+        UC26[Track System Usage]
+        UC28[View Change History]
+    end
+
+    %% Real-time Features
+    subgraph "Real-time Monitoring"
+        UC31[Receive Notifications]
+        UC32[Monitor Live Chat]
+    end
+
+    %% Actor Relationships
+    Admin --> UC24
+    Admin --> UC25
+    Admin --> UC26
+    Admin --> UC27
+    Admin --> UC28
+    Admin --> UC30
+
+    Dev --> UC24
+    Dev --> UC27
+    Dev --> UC31
+
+    KeyUser --> UC24
+    KeyUser --> UC27
+    KeyUser --> UC31
+    KeyUser --> UC32
+
+    %% System relationships
+    UC24 -.-> UC27
+    UC25 -.-> UC26
+    UC31 -.-> UC32
+
+    %% Styling
+    classDef actor fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000
+    classDef dashboard fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px,color:#000
+    classDef reporting fill:#fafafa,stroke:#424242,stroke-width:1px,color:#000
+    classDef realtime fill:#e0f2f1,stroke:#00695c,stroke-width:1px,color:#000
+
+    class Admin,Dev,KeyUser actor
+    class UC24,UC27,UC30 dashboard
+    class UC25,UC26,UC28 reporting
+    class UC31,UC32 realtime

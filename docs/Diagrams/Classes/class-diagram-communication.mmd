@@ -1,0 +1,99 @@
+classDiagram
+    %% Communication System Classes
+    class ChatConversation {
+        +String id
+        +String title
+        +String description
+        +String type
+        +String relatedOutageId
+        +String relatedApplicationId
+        +String createdBy
+        +String lastMessageId
+        +DateTime createdAt
+        +DateTime updatedAt
+        
+        +addParticipant(String) Boolean
+        +sendMessage(String, String) ChatMessage
+        +getMessages() ChatMessage[]
+    }
+    
+    class ChatMessage {
+        +String id
+        +String conversationId
+        +String userId
+        +String content
+        +String replyToMessageId
+        +String attachmentUrl
+        +String attachmentType
+        +DateTime createdAt
+        +DateTime updatedAt
+        
+        +markAsRead(String) Boolean
+        +reply(String, String) ChatMessage
+    }
+    
+    class ChatParticipant {
+        +String id
+        +String conversationId
+        +String userId
+        +ChatParticipantRole role
+        +DateTime joinedAt
+        +DateTime leftAt
+        
+        +leave() Boolean
+        +changeRole(ChatParticipantRole) Boolean
+    }
+    
+    class MessageRead {
+        +String id
+        +String messageId
+        +String userId
+        +DateTime readAt
+        
+        +markAsRead() Boolean
+    }
+    
+    %% Authentication Classes
+    class RefreshToken {
+        +String id
+        +String userId
+        +String tokenHash
+        +DateTime expiresAt
+        +Boolean isRevoked
+        +DateTime createdAt
+        +DateTime lastUsedAt
+        
+        +isValid() Boolean
+        +revoke(String) Boolean
+        +refresh() RefreshToken
+    }
+    
+    class Invitation {
+        +String id
+        +String email
+        +String token
+        +DateTime expiresAt
+        +UserRole role
+        +String companyId
+        +String firstName
+        +String lastName
+        +DateTime createdAt
+        
+        +isExpired() Boolean
+        +accept(String) User
+        +revoke() Boolean
+    }
+    
+    %% Enumerations
+    class ChatParticipantRole {
+        <<enumeration>>
+        OWNER
+        ADMIN
+        MEMBER
+    }
+    
+    %% Relationships
+    ChatConversation "1" --> "*" ChatParticipant
+    ChatConversation "1" --> "*" ChatMessage
+    ChatMessage "1" --> "*" MessageRead
+    ChatMessage "1" --> "*" ChatMessage
