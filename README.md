@@ -8,91 +8,91 @@
 </div>
 
 <div align="center">
-  <h3>🎯 Sistema inteligente para gerenciamento de outages de software</h3>
-  <p>Uma solução completa para coordenar, aprovar e monitorar indisponibilidades planejadas de sistemas</p>
+  <h3>🎯 Intelligent system for software outage management</h3>
+  <p>A comprehensive solution to coordinate, approve, and monitor planned software outages</p>
 </div>
 
 ---
 
-## 📋 Índice
+## 📋 Table of Contents
 
-- [Sobre o Projeto](#-sobre-o-projeto)
-- [Funcionalidades](#-funcionalidades)
-- [Tecnologias](#-tecnologias)
-- [Arquitetura](#-arquitetura)
-- [Instalação](#-instalação)
-- [Configuração](#-configuração)
-- [Uso](#-uso)
+- [About the Project](#-about-the-project)
+- [Features](#-features)
+- [Technologies](#-technologies)
+- [Architecture](#-architecture)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+- [Usage](#-usage)
 - [API Documentation](#-api-documentation)
-- [Contribuição](#-contribuição)
+- [Contributing](#-contributing)
 - [Roadmap](#-roadmap)
-- [Licença](#-licença)
-- [Contato](#-contato)
+- [License](#-license)
+- [Contact](#-contact)
 
 ---
 
-## 🎯 Sobre o Projeto
+## 🎯 About the Project
 
-O **IOMS** (Intelligent Outage Management for Software) é uma plataforma moderna e intuitiva desenvolvida para empresas que precisam gerenciar outages de software de forma eficiente e coordenada. 
+**IOMS** (Intelligent Outage Management for Software) is a modern and intuitive platform developed for companies that need to manage software outages efficiently and in a coordinated manner.
 
-### 🔍 **Problema Resolvido**
-- **Coordenação caótica** de paradas de sistema
-- **Falta de visibilidade** sobre impactos e dependências
-- **Processos de aprovação** manuais e desorganizados
-- **Comunicação deficiente** entre equipes
-- **Conflitos de horários** não detectados
+### 🔍 **Problem Solved**
+- **Chaotic coordination** of system downtimes
+- **Lack of visibility** on impacts and dependencies  
+- **Manual and disorganized** approval processes
+- **Poor communication** between teams
+- **Undetected schedule conflicts**
 
-### ✅ **Solução Oferecida**
-Uma plataforma unificada que centraliza todo o processo de gestão de outages, desde o planejamento até a execução, com workflows inteligentes, notificações em tempo real e dashboards analíticos.
+### ✅ **Solution Offered**
+A unified platform that centralizes the entire outage management process, from planning to execution, with intelligent workflows, real-time notifications, and analytical dashboards.
 
 ---
 
-## 🚀 Funcionalidades
+## 🚀 Features
 
-### 📅 **Gestão de Outages**
-- **Criação e edição** de solicitações de outage
-- **Calendário visual** com visão mensal/semanal
-- **Detecção automática** de conflitos de horário
-- **Templates personalizáveis** para diferentes tipos de outage
-- **Histórico completo** de alterações e aprovações
+### 📅 **Outage Management**
+- **Create and edit** outage requests
+- **Visual calendar** with monthly/weekly views
+- **Automatic detection** of schedule conflicts
+- **Customizable templates** for different outage types
+- **Complete history** of changes and approvals
 
-### 👥 **Sistema de Aprovação**
-- **Workflows customizáveis** por aplicação
-- **Múltiplos níveis** de aprovação
-- **Aprovação em lote** para eficiência
-- **Delegação** de responsabilidades
-- **Notificações automáticas** por email e sistema
+### 👥 **Approval System**
+- **Customizable workflows** per application
+- **Multiple approval levels**
+- **Batch approval** for efficiency
+- **Responsibility delegation**
+- **Automatic notifications** via email and system
 
-### 💬 **Comunicação Integrada**
-- **Chat em tempo real** por outage/aplicação
-- **Notificações push** instantâneas
-- **Comentários** contextuais
-- **Mentions** e alertas direcionados
-- **Histórico** de conversas
+### 💬 **Integrated Communication**
+- **Real-time chat** per outage/application
+- **Instant push notifications**
+- **Contextual comments**
+- **Mentions** and targeted alerts
+- **Conversation history**
 
-### 📊 **Analytics e Dashboards**
-- **Métricas em tempo real** de outages
-- **Relatórios de performance** por aplicação
-- **Indicadores de SLA** e compliance
-- **Análise de tendências** e padrões
-- **Exportação** de dados
+### 📊 **Analytics and Dashboards**
+- **Real-time outage metrics**
+- **Performance reports** per application
+- **SLA and compliance indicators**
+- **Trend and pattern analysis**
+- **Data export**
 
 ### 🏢 **Multi-tenant**
-- **Isolamento completo** por empresa
-- **Gestão de usuários** e permissões
-- **Customização** de workflows
-- **Configurações** por organização
+- **Complete isolation** per company
+- **User and permission management**
+- **Workflow customization**
+- **Organization-specific configurations**
 
-### 🔐 **Segurança**
-- **Autenticação JWT** robusta
-- **Autorização baseada** em roles
-- **Criptografia** de dados sensíveis
-- **Auditoria completa** de ações
-- **Rate limiting** e proteções
+### 🔐 **Security**
+- **Robust JWT authentication**
+- **Role-based authorization**
+- **Sensitive data encryption**
+- **Complete action auditing**
+- **Rate limiting and protections**
 
 ---
 
-## 🛠 Tecnologias
+## 🛠 Technologies
 
 ### **Backend**
 <div align="left">
@@ -123,7 +123,7 @@ Uma plataforma unificada que centraliza todo o processo de gestão de outages, d
 
 ---
 
-## 🏗 Arquitetura
+## 🏗 Architecture
 
 ```mermaid
 graph TB
@@ -172,64 +172,64 @@ graph TB
 
 ---
 
-## 📦 Instalação
+## 📦 Installation
 
-### **Pré-requisitos**
+### **Prerequisites**
 - **Node.js** >= 18.0.0
-- **npm** >= 8.0.0 ou **yarn** >= 1.22.0
+- **npm** >= 8.0.0 or **yarn** >= 1.22.0
 - **PostgreSQL** >= 14.0.0
-- **Git** para controle de versão
+- **Git** for version control
 
-### **Clone do Repositório**
+### **Repository Clone**
 ```bash
-# Clone o projeto
+# Clone the project
 git clone https://github.com/GabrielPaiao/IOMS.git
 
-# Entre no diretório
+# Enter the directory
 cd IOMS
 ```
 
-### **Configuração do Backend**
+### **Backend Setup**
 ```bash
-# Entre no diretório do backend
+# Enter the backend directory
 cd ioms-backend
 
-# Instale as dependências
+# Install dependencies
 npm install
 
-# Configure as variáveis de ambiente
+# Configure environment variables
 cp .env.example .env
 
-# Configure a conexão com o banco de dados no arquivo .env
+# Configure database connection in .env file
 # DATABASE_URL="postgresql://username:password@localhost:5432/ioms"
 
-# Execute as migrações do banco
+# Run database migrations
 npx prisma migrate dev
 
-# Gere os seeds de dados iniciais
+# Generate initial data seeds
 npx prisma db seed
 ```
 
-### **Configuração do Frontend**
+### **Frontend Setup**
 ```bash
-# Entre no diretório do frontend (em outro terminal)
+# Enter the frontend directory (in another terminal)
 cd ioms-frontend
 
-# Instale as dependências
+# Install dependencies
 npm install
 
-# Configure as variáveis de ambiente
+# Configure environment variables
 cp .env.example .env
 
-# Configure a URL da API no arquivo .env
+# Configure API URL in .env file
 # VITE_API_BASE_URL=http://localhost:3000/api
 ```
 
 ---
 
-## ⚙️ Configuração
+## ⚙️ Configuration
 
-### **Variáveis de Ambiente - Backend**
+### **Environment Variables - Backend**
 ```env
 # Database
 DATABASE_URL="postgresql://username:password@localhost:5432/ioms"
@@ -249,7 +249,7 @@ NODE_ENV="development"
 PORT=3000
 ```
 
-### **Variáveis de Ambiente - Frontend**
+### **Environment Variables - Frontend**
 ```env
 # API Configuration
 VITE_API_BASE_URL=http://localhost:3000/api
@@ -262,9 +262,9 @@ VITE_APP_VERSION="1.0.0"
 
 ---
 
-## 🚀 Uso
+## 🚀 Usage
 
-### **Desenvolvimento**
+### **Development**
 ```bash
 # Terminal 1 - Backend
 cd ioms-backend
@@ -275,31 +275,31 @@ cd ioms-frontend
 npm run dev
 ```
 
-### **Acesso à Aplicação**
+### **Application Access**
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:3000/api
 - **WebSocket**: ws://localhost:3000/chat
 
-### **Primeira Execução**
-1. **Registro de Admin**: Acesse `/register` para criar o primeiro usuário administrador
-2. **Configuração Inicial**: Configure sua empresa e aplicações
-3. **Convite de Usuários**: Convide membros da equipe através da interface
-4. **Primeira Outage**: Crie sua primeira solicitação de outage
+### **First Run**
+1. **Admin Registration**: Go to `/register` to create the first administrator user
+2. **Initial Setup**: Configure your company and applications
+3. **User Invitation**: Invite team members through the interface
+4. **First Outage**: Create your first outage request
 
-### **Fluxo de Trabalho Típico**
-1. **Dev/Key User** cria uma solicitação de outage
-2. **Sistema** detecta conflitos automaticamente
-3. **Aprovadores** recebem notificações
-4. **Chat** permite discussão em tempo real
-5. **Dashboard** monitora status e métricas
+### **Typical Workflow**
+1. **Dev/Key User** creates an outage request
+2. **System** automatically detects conflicts
+3. **Approvers** receive notifications
+4. **Chat** enables real-time discussion
+5. **Dashboard** monitors status and metrics
 
 ---
 
 ## 📚 API Documentation
 
-### **Endpoints Principais**
+### **Main Endpoints**
 
-#### **Autenticação**
+#### **Authentication**
 ```http
 POST /api/auth/login
 POST /api/auth/register/admin
@@ -309,45 +309,45 @@ GET  /api/auth/me
 
 #### **Outages**
 ```http
-GET    /api/outages              # Listar outages
-POST   /api/outages              # Criar outage
-GET    /api/outages/:id          # Detalhes da outage
-PATCH  /api/outages/:id          # Atualizar outage
-DELETE /api/outages/:id          # Deletar outage
-PATCH  /api/outages/:id/approve  # Aprovar outage
-PATCH  /api/outages/:id/reject   # Rejeitar outage
+GET    /api/outages              # List outages
+POST   /api/outages              # Create outage
+GET    /api/outages/:id          # Outage details
+PATCH  /api/outages/:id          # Update outage
+DELETE /api/outages/:id          # Delete outage
+PATCH  /api/outages/:id/approve  # Approve outage
+PATCH  /api/outages/:id/reject   # Reject outage
 ```
 
-#### **Aplicações**
+#### **Applications**
 ```http
-GET    /api/applications         # Listar aplicações
-POST   /api/applications         # Criar aplicação
-GET    /api/applications/:id     # Detalhes da aplicação
-PATCH  /api/applications/:id     # Atualizar aplicação
+GET    /api/applications         # List applications
+POST   /api/applications         # Create application
+GET    /api/applications/:id     # Application details
+PATCH  /api/applications/:id     # Update application
 ```
 
 #### **Chat**
 ```http
-GET    /api/chat/conversations   # Listar conversas
-POST   /api/chat/conversations   # Criar conversa
-POST   /api/chat/messages        # Enviar mensagem
+GET    /api/chat/conversations   # List conversations
+POST   /api/chat/conversations   # Create conversation
+POST   /api/chat/messages        # Send message
 ```
 
 #### **WebSocket Events**
 ```javascript
-// Conectar ao WebSocket
+// Connect to WebSocket
 const socket = io('ws://localhost:3000/chat');
 
-// Eventos disponíveis
+// Available events
 socket.emit('conversation:join', { conversationId });
 socket.emit('message:send', { conversationId, content });
 socket.on('message:received', (message) => {});
 socket.on('user:typing', (data) => {});
 ```
 
-### **Autenticação API**
+### **API Authentication**
 ```javascript
-// Headers necessários
+// Required headers
 {
   "Authorization": "Bearer <jwt_token>",
   "Content-Type": "application/json"
@@ -356,79 +356,79 @@ socket.on('user:typing', (data) => {});
 
 ---
 
-## 🤝 Contribuição
+## 🤝 Contributing
 
-### **Como Contribuir**
+### **How to Contribute**
 
-1. **Fork** o projeto
-2. **Clone** seu fork: `git clone https://github.com/seu-usuario/IOMS.git`
-3. **Crie** uma branch: `git checkout -b feature/nova-funcionalidade`
-4. **Commit** suas mudanças: `git commit -m 'feat: adiciona nova funcionalidade'`
-5. **Push** para a branch: `git push origin feature/nova-funcionalidade`
-6. **Abra** um Pull Request
+1. **Fork** the project
+2. **Clone** your fork: `git clone https://github.com/your-username/IOMS.git`
+3. **Create** a branch: `git checkout -b feature/new-feature`
+4. **Commit** your changes: `git commit -m 'feat: add new feature'`
+5. **Push** to branch: `git push origin feature/new-feature`
+6. **Open** a Pull Request
 
-### **Padrões de Commit**
+### **Commit Standards**
 ```
-feat: nova funcionalidade
-fix: correção de bug
-docs: documentação
-style: formatação
-refactor: refatoração
-test: testes
-chore: tarefas de build/config
+feat: new feature
+fix: bug fix
+docs: documentation
+style: formatting
+refactor: refactoring
+test: tests
+chore: build/config tasks
 ```
 
-### **Estrutura do Projeto**
+### **Project Structure**
 ```
 IOMS/
-├── ioms-backend/           # API NestJS
+├── ioms-backend/           # NestJS API
 │   ├── src/
-│   │   ├── auth/          # Autenticação
-│   │   ├── outages/       # Gestão de outages
-│   │   ├── chat/          # Chat em tempo real
-│   │   ├── applications/  # Gestão de aplicações
-│   │   └── shared/        # Módulos compartilhados
-│   └── prisma/            # Esquema do banco
+│   │   ├── auth/          # Authentication
+│   │   ├── outages/       # Outage management
+│   │   ├── chat/          # Real-time chat
+│   │   ├── applications/  # Application management
+│   │   └── shared/        # Shared modules
+│   └── prisma/            # Database schema
 ├── ioms-frontend/         # React App
 │   ├── src/
-│   │   ├── components/    # Componentes React
-│   │   ├── pages/         # Páginas da aplicação
-│   │   ├── services/      # Serviços API
+│   │   ├── components/    # React components
+│   │   ├── pages/         # Application pages
+│   │   ├── services/      # API services
 │   │   └── context/       # Context Providers
-└── docs/                  # Documentação
+└── docs/                  # Documentation
 ```
 
 ---
 
 ## 🗺 Roadmap
 
-### **Versão 1.1** (Q1 2025)
+### **Version 1.1**
 - [ ] **Mobile App** (React Native)
-- [ ] **API v2** com GraphQL
-- [ ] **Integração Slack/Teams**
-- [ ] **Relatórios avançados**
+- [ ] **API v2** with GraphQL
+- [ ] **Slack/Teams Integration**
+- [ ] **Advanced Reports**
 
-### **Versão 1.2** (Q2 2025)
-- [ ] **Multi-idiomas** (i18n)
-- [ ] **Temas customizáveis**
-- [ ] **Integração LDAP/SSO**
-- [ ] **Webhooks** para integrações
+### **Version 1.2**
+- [ ] **Multi-language** (i18n)
+- [ ] **Customizable Themes**
+- [ ] **LDAP/SSO Integration**
+- [ ] **Webhooks** for integrations
 
-### **Versão 2.0** (Q3 2025)
-- [ ] **Microserviços** architecture
+### **Version 2.0**
+- [ ] **Microservices** architecture
 - [ ] **Kubernetes** deployment
-- [ ] **Machine Learning** para predições
-- [ ] **API Gateway** avançado
+- [ ] **Machine Learning** for predictions
+- [ ] **Advanced API Gateway**
 
 ---
 
-## 📄 Licença
+## 📄 License
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
 
 ---
 
-## 👨‍💻 Contato
+## 👨‍💻 Contact
 
 <div align="center">
 
@@ -445,6 +445,6 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ---
 
 <div align="center">
-  <p><strong>🚀 Desenvolvido com ❤️ para otimizar a gestão de outages de software</strong></p>
-  <p><em>Se este projeto foi útil para você, considere dar uma ⭐!</em></p>
+  <p><strong>🚀 Developed with ❤️ to optimize software outage management</strong></p>
+  <p><em>If this project was useful to you, consider giving it a ⭐!</em></p>
 </div>
