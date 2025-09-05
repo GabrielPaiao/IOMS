@@ -1,0 +1,105 @@
+erDiagram
+    %% Core Entities
+    User {
+        int id PK
+        string email
+        string password_hash
+        string name
+        enum role
+        int company_id FK
+        datetime created_at
+        datetime updated_at
+    }
+
+    Company {
+        int id PK
+        string name
+        string domain
+        text description
+        datetime created_at
+        datetime updated_at
+    }
+
+    Application {
+        int id PK
+        string name
+        text description
+        enum criticality
+        string owner_email
+        int company_id FK
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% Outage Management
+    Outage {
+        int id PK
+        string title
+        text description
+        datetime start_time
+        datetime end_time
+        enum status
+        enum impact
+        int requester_id FK
+        int application_id FK
+        int company_id FK
+        datetime created_at
+        datetime updated_at
+    }
+
+    ApprovalWorkflow {
+        int id PK
+        int outage_id FK
+        int approver_id FK
+        enum status
+        text comments
+        datetime approved_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% Communication
+    ChatMessage {
+        int id PK
+        int outage_id FK
+        int sender_id FK
+        text content
+        datetime sent_at
+        datetime created_at
+    }
+
+    Notification {
+        int id PK
+        int user_id FK
+        string title
+        text message
+        enum type
+        boolean is_read
+        datetime created_at
+    }
+
+    %% Audit & History
+    ChangeHistory {
+        int id PK
+        string entity_type
+        int entity_id
+        int user_id FK
+        text changes
+        datetime created_at
+    }
+
+    %% Relationships
+    Company ||--o{ User : "employs"
+    Company ||--o{ Application : "owns"
+    Company ||--o{ Outage : "manages"
+    
+    User ||--o{ Outage : "requests"
+    User ||--o{ ApprovalWorkflow : "approves"
+    User ||--o{ ChatMessage : "sends"
+    User ||--o{ Notification : "receives"
+    User ||--o{ ChangeHistory : "performs"
+    
+    Application ||--o{ Outage : "affects"
+    
+    Outage ||--o{ ApprovalWorkflow : "requires"
+    Outage ||--o{ ChatMessage : "discusses"

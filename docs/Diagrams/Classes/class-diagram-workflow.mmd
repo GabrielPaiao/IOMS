@@ -1,0 +1,99 @@
+classDiagram
+    %% Approval and Workflow Classes
+    class ApprovalWorkflow {
+        +String id
+        +String outageId
+        +String name
+        +String description
+        +ApprovalWorkflowStatus status
+        +Boolean isActive
+        +String createdBy
+        +DateTime createdAt
+        +DateTime updatedAt
+        
+        +addStep(WorkflowStep) Boolean
+        +executeWorkflow() Boolean
+        +getNextStep() WorkflowStep
+    }
+    
+    class WorkflowStep {
+        +String id
+        +String workflowId
+        +Int order
+        +WorkflowStepType type
+        +String name
+        +String description
+        +String assigneeId
+        +WorkflowStepStatus status
+        +DateTime completedAt
+        +String comments
+        +DateTime createdAt
+        +DateTime updatedAt
+        
+        +execute() Boolean
+        +approve() Boolean
+        +reject(String) Boolean
+    }
+    
+    class OutageHistory {
+        +String id
+        +String outageId
+        +String action
+        +String field
+        +String oldValue
+        +String newValue
+        +String userId
+        +DateTime timestamp
+        +String comments
+        +String changeType
+        +String reason
+        
+        +logChange(String, String, String) Boolean
+    }
+    
+    class Notification {
+        +String id
+        +String userId
+        +String type
+        +String title
+        +String message
+        +String priority
+        +Json data
+        +Boolean isRead
+        +DateTime readAt
+        +String outageId
+        +DateTime createdAt
+        
+        +markAsRead() Boolean
+        +send() Boolean
+    }
+    
+    %% Enumerations
+    class ApprovalWorkflowStatus {
+        <<enumeration>>
+        PENDING
+        APPROVED
+        REJECTED
+        CHANGES_REQUESTED
+    }
+    
+    class WorkflowStepStatus {
+        <<enumeration>>
+        PENDING
+        APPROVED
+        REJECTED
+        SKIPPED
+        CHANGES_REQUESTED
+    }
+    
+    class WorkflowStepType {
+        <<enumeration>>
+        APPROVAL
+        NOTIFICATION
+        AUTOMATION
+    }
+    
+    %% Relationships
+    ApprovalWorkflow "1" --> "*" WorkflowStep
+    ApprovalWorkflow "1" --> "*" OutageHistory
+    ApprovalWorkflow "1" --> "*" Notification

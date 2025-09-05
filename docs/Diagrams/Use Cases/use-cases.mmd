@@ -1,0 +1,54 @@
+graph TB
+    %% Main Actors
+    Dev[Developer<br/>👨‍💻]
+    KeyUser[Key User<br/>👤]
+
+    %% Authentication
+    subgraph "System Access"
+        UC01[Login to System]
+        UC03[Logout from System]
+    end
+
+    %% Core Outage Flow
+    subgraph "Outage Management"
+        UC10[Create Outage Request]
+        UC12[View Outage Calendar]
+        UC13[Check Schedule Conflicts]
+    end
+
+    %% Approval Flow
+    subgraph "Approval Process"
+        UC15[Review Outage Request]
+        UC16[Approve Outage Request]
+        UC17[Reject Outage Request]
+    end
+
+    %% Actor Relationships
+    Dev --> UC01
+    Dev --> UC03
+    Dev --> UC10
+    Dev --> UC12
+    Dev --> UC13
+
+    KeyUser --> UC01
+    KeyUser --> UC03
+    KeyUser --> UC12
+    KeyUser --> UC15
+    KeyUser --> UC16
+    KeyUser --> UC17
+
+    %% System relationships
+    UC13 -.-> UC10
+    UC16 -.-> UC12
+    UC17 -.-> UC12
+
+    %% Styling
+    classDef actor fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000
+    classDef auth fill:#e8f5e8,stroke:#2e7d32,stroke-width:1px,color:#000
+    classDef outage fill:#fce4ec,stroke:#c2185b,stroke-width:1px,color:#000
+    classDef approval fill:#e3f2fd,stroke:#1976d2,stroke-width:1px,color:#000
+
+    class Dev,KeyUser actor
+    class UC01,UC03 auth
+    class UC10,UC12,UC13 outage
+    class UC15,UC16,UC17 approval
