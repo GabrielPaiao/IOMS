@@ -5,6 +5,8 @@ import { AuthService } from './auth.service';
 import { RegisterAdminDto } from './dto/register-admin.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from '../shared/decorators/public.decorator';
 import { LoginResponseDto } from './dto/login-response.dto';
@@ -67,7 +69,7 @@ export class AuthController {
   @ApiResponse({ 
     status: HttpStatus.CREATED,
     description: 'Admin registered successfully',
-    type: RegisterAdminDto
+    type: LoginResponseDto
   })
   @ApiResponse({ 
     status: HttpStatus.BAD_REQUEST,
@@ -77,9 +79,11 @@ export class AuthController {
     status: HttpStatus.CONFLICT,
     description: 'Email already exists' 
   })
-  async registerAdmin(@Body() registerAdminDto: RegisterAdminDto) {
+  async registerAdmin(@Body() registerAdminDto: RegisterAdminDto, @Req() req: any) {
     try {
-      return await this.authService.registerAdmin(registerAdminDto);
+      const ipAddress = req.ip || req.connection.remoteAddress;
+      const userAgent = req.get('User-Agent');
+      return await this.authService.registerAdmin(registerAdminDto, ipAddress, userAgent);
     } catch (error) {
       console.log('Erro no controller ao registrar admin:', error);
       throw error;
@@ -208,5 +212,51 @@ export class AuthController {
         userAgent: sessionInfo.userAgent,
       } : null
     };
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 3, ttl: 300000 } }) // 3 tentativas por 5 minutos
+  @ApiOperation({ summary: 'Request password reset' })
+  @ApiBody({ type: ForgotPasswordDto })
+  @ApiResponse({ 
+    status: HttpStatus.OK,
+    description: 'Password reset email sent (if email exists)',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' }
+      }
+    }
+  })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return await this.authService.forgotPassword(forgotPasswordDto.email);
+  }
+
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 300000 } }) // 5 tentativas por 5 minutos
+  @ApiOperation({ summary: 'Reset password with token' })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({ 
+    status: HttpStatus.OK,
+    description: 'Password successfully reset',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid or expired token' 
+  })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return await this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
   }
 }

@@ -150,7 +150,7 @@ export default function OutageCalendarPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-600 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Erro ao carregar calendário</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Error loading calendar</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button 
             onClick={() => {
@@ -159,7 +159,7 @@ export default function OutageCalendarPage() {
             }}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
-            Tentar novamente
+            Try again
           </button>
         </div>
       </div>
@@ -168,8 +168,8 @@ export default function OutageCalendarPage() {
 
   const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentDate);
   const monthNames = [
-    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
   return (
@@ -180,10 +180,10 @@ export default function OutageCalendarPage() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                Calendário de Outages
+                Outage Calendar
               </h1>
               <p className="text-gray-600 mt-2">
-                Visualize e gerencie todas as outages programadas
+                View and manage all scheduled outages
               </p>
             </div>
             
@@ -231,25 +231,25 @@ export default function OutageCalendarPage() {
           </div>
         </div>
 
-        {/* Calendário */}
+        {/* Calendar */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          {/* Cabeçalho dos dias da semana */}
+          {/* Week days header */}
           <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
-            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
               <div key={day} className="px-3 py-3 text-center text-sm font-medium text-gray-500">
                 {day}
               </div>
             ))}
           </div>
 
-          {/* Dias do mês */}
+          {/* Month days */}
           <div className="grid grid-cols-7">
-            {/* Dias vazios no início */}
+            {/* Empty days at the beginning */}
             {Array.from({ length: startingDayOfWeek }, (_, index) => (
               <div key={`empty-${index}`} className="min-h-[120px] border-r border-b border-gray-200 bg-gray-50"></div>
             ))}
 
-            {/* Dias do mês */}
+            {/* Month days */}
             {Array.from({ length: daysInMonth }, (_, index) => {
               const day = index + 1;
               const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
@@ -356,7 +356,7 @@ export default function OutageCalendarPage() {
                     
                     {outage.application && (
                       <p className="text-sm text-gray-600">
-                        Aplicação: {outage.application.name}
+                        Application: {outage.application.name}
                       </p>
                     )}
                   </div>
@@ -364,39 +364,39 @@ export default function OutageCalendarPage() {
               </div>
             ) : (
               <p className="text-gray-500 text-center py-4">
-                Nenhuma outage programada para esta data
+                No outages scheduled for this date
               </p>
             )}
           </div>
         )}
 
-        {/* Legenda */}
+        {/* Legend */}
         <div className="mt-6 bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Legenda</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Legend</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 bg-green-50 border-l-2 border-green-500 rounded"></div>
-              <span className="text-sm text-gray-600">Aprovada</span>
+              <span className="text-sm text-gray-600">Approved</span>
             </div>
             
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 bg-yellow-50 border-l-2 border-yellow-500 rounded"></div>
-              <span className="text-sm text-gray-600">Pendente</span>
+              <span className="text-sm text-gray-600">Pending</span>
             </div>
             
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 bg-red-50 border-l-2 border-red-500 rounded"></div>
-              <span className="text-sm text-gray-600">Rejeitada</span>
+              <span className="text-sm text-gray-600">Rejected</span>
             </div>
 
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 bg-blue-50 border-l-2 border-blue-500 rounded"></div>
-              <span className="text-sm text-gray-600">Concluída</span>
+              <span className="text-sm text-gray-600">Completed</span>
             </div>
 
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 bg-gray-50 border-l-2 border-gray-500 rounded"></div>
-              <span className="text-sm text-gray-600">Cancelada</span>
+              <span className="text-sm text-gray-600">Cancelled</span>
             </div>
           </div>
         </div>

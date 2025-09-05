@@ -115,10 +115,10 @@ export default function ApprovalActions({
           {isCreator ? (
             <div>
               <p className="text-gray-600 text-sm">
-                <strong>🚫 Não é possível aprovar:</strong> Você não pode aprovar suas próprias solicitações de outage.
+                <strong>🚫 Cannot approve:</strong> You cannot approve your own outage requests.
               </p>
               <p className="text-xs text-gray-500 mt-2">
-                A aprovação deve ser feita por outro Key User da aplicação ou um Administrador.
+                Approval must be done by another Key User of the application or an Administrator.
               </p>
             </div>
           ) : (

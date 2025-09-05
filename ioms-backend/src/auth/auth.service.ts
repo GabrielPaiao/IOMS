@@ -84,10 +84,10 @@ export class AuthService {
     };
   }
 
-  async registerAdmin(dto: RegisterAdminDto) {
+  async registerAdmin(dto: RegisterAdminDto, ipAddress?: string, userAgent?: string) {
     const hashedPassword = await bcrypt.hash(dto.password, this.SALT_ROUNDS);
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      const user = await this.prisma.$transaction(async (tx) => {
         // Verifica se email já existe
         const existingUser = await tx.user.findUnique({
           where: { email: dto.email },
@@ -124,6 +124,37 @@ export class AuthService {
           }
         });
       });
+
+      // Gerar tokens e sessão como no login
+      const tokenPair = await this.refreshTokenService.generateTokenPair(user.id);
+      
+      // Criar sessão do usuário
+      this.sessionService.createSession(
+        user.id, 
+        tokenPair.accessToken, 
+        tokenPair.refreshToken,
+        ipAddress,
+        userAgent
+      );
+
+      return {
+        accessToken: tokenPair.accessToken,
+        refreshToken: tokenPair.refreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          companyId: user.companyId,
+        },
+        // Informações adicionais sobre a sessão
+        sessionInfo: {
+          expiresIn: this.configService.get('JWT_EXPIRES_IN', '15m'),
+          refreshExpiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN', '7d'),
+          inactivityTimeout: this.configService.get('SESSION_INACTIVITY_TIMEOUT', 30 * 60 * 1000),
+        }
+      };
     } catch (error) {
       console.log('Erro ao registrar admin:', error);
       throw error;
@@ -246,5 +277,118 @@ export class AuthService {
    */
   getSessionTimeRemaining(userId: string): number | null {
     return this.sessionService.getTimeUntilExpiration(userId);
+  }
+
+  /**
+   * Solicita reset de senha - gera token e envia email
+   */
+  async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true, firstName: true, lastName: true, isActive: true }
+    });
+
+    if (!user || !user.isActive) {
+      // Por segurança, sempre retorna sucesso mesmo se o email não existir
+      return {
+        success: true,
+        message: 'If the email exists in our system, you will receive a password reset link.'
+      };
+    }
+
+    // Gera token JWT temporário (expira em 1 hora)
+    const resetToken = this.jwtService.sign(
+      { 
+        userId: user.id, 
+        email: user.email, 
+        purpose: 'password-reset' 
+      },
+      { 
+        secret: this.configService.get<string>('JWT_SECRET'),
+        expiresIn: '1h' 
+      }
+    );
+
+    // Salva o token no banco (opcional, para invalidar tokens usados)
+    await this.prisma.passwordResetToken.create({
+      data: {
+        token: resetToken,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hora
+      }
+    });
+
+    // TODO: Implementar envio de email
+    // await this.emailService.sendPasswordResetEmail(user.email, resetToken);
+    
+    console.log(`Password reset token for ${email}: ${resetToken}`);
+
+    return {
+      success: true,
+      message: 'If the email exists in our system, you will receive a password reset link.'
+    };
+  }
+
+  /**
+   * Reset de senha usando o token
+   */
+  async resetPassword(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    try {
+      // Verifica se o token está na blacklist
+      if (await this.blacklistService.isTokenBlacklisted(token)) {
+        throw new UnauthorizedException('Invalid or expired token');
+      }
+
+      // Decodifica e valida o token
+      const decoded = this.jwtService.verify(token, {
+        secret: this.configService.get<string>('JWT_SECRET')
+      });
+
+      if (decoded.purpose !== 'password-reset') {
+        throw new UnauthorizedException('Invalid token purpose');
+      }
+
+      // Verifica se o token ainda está válido no banco
+      const resetTokenRecord = await this.prisma.passwordResetToken.findFirst({
+        where: {
+          token,
+          userId: decoded.userId,
+          usedAt: null,
+          expiresAt: { gt: new Date() }
+        }
+      });
+
+      if (!resetTokenRecord) {
+        throw new UnauthorizedException('Invalid or expired token');
+      }
+
+      // Atualiza a senha do usuário
+      const hashedPassword = await bcrypt.hash(newPassword, this.SALT_ROUNDS);
+      
+      await this.prisma.user.update({
+        where: { id: decoded.userId },
+        data: { password: hashedPassword }
+      });
+
+      // Marca o token como usado
+      await this.prisma.passwordResetToken.update({
+        where: { id: resetTokenRecord.id },
+        data: { usedAt: new Date() }
+      });
+
+      // Adiciona o token à blacklist
+      await this.blacklistService.addToBlacklist(token, new Date(decoded.exp * 1000));
+
+      // Revoga todos os refresh tokens do usuário por segurança
+      await this.refreshTokenService.revokeAllUserRefreshTokens(decoded.userId, 'Password reset');
+
+      return {
+        success: true,
+        message: 'Password has been successfully reset.'
+      };
+
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
   }
 }

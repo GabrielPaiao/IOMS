@@ -18,7 +18,7 @@ export default function LoginPage() {
       await login({ email, password });
       navigate("/dashboard");
     } catch (error: any) {
-      setError(error.response?.data?.message || "Erro ao fazer login. Verifique suas credenciais.");
+      setError(error.response?.data?.message || "Error logging in. Please check your credentials.");
     }
   };
 
@@ -51,7 +51,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
-                placeholder="seu@email.com"
+                placeholder="your@email.com"
                 className="block w-full px-4 py-3 rounded-lg bg-gray-200 border-transparent focus:outline-none focus:ring-2 focus:ring-[#0066FF] transition-colors placeholder:text-gray-500"
               />
             </div>
@@ -70,7 +70,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
-                placeholder="Sua senha"
+                placeholder="Your password"
                 className="block w-full px-4 py-3 rounded-lg bg-gray-200 border-transparent focus:outline-none focus:ring-2 focus:ring-[#0066FF] transition-colors placeholder:text-gray-500"
               />
             </div>
@@ -80,7 +80,7 @@ export default function LoginPage() {
               disabled={isLoading}
               className="w-full py-3 bg-[#0066FF] text-white rounded-lg font-medium hover:bg-[#0052CC] focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? "Entrando..." : "Entrar"}
+              {isLoading ? "Signing in..." : "Sign in"}
             </button>
 
             {error && (
@@ -89,6 +89,15 @@ export default function LoginPage() {
               </div>
             )}
           </form>
+
+          <div className="mt-6 text-center">
+            <Link
+              to="/forgot-password"
+              className="text-[#0066FF] hover:text-[#0052CC] text-sm font-medium transition-colors"
+            >
+              Forgot your password?
+            </Link>
+          </div>
 
           <div className="mt-8 text-center text-sm">
             <Link

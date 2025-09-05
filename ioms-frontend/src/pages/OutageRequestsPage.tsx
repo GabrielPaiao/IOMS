@@ -85,18 +85,18 @@ export default function OutageRequestsPage() {
 
   const handleApprove = async (outageId: string) => {
     try {
-      await approveOutage(outageId, 'Aprovado via interface web');
+      await approveOutage(outageId, 'Approved via web interface');
       // Recarregar a lista pendente
       if (activeTab === 'pending') {
         loadPendingApproval();
       }
     } catch (error) {
-      console.error('Erro ao aprovar outage:', error);
+      console.error('Error approving outage:', error);
     }
   };
 
   const handleReject = async (outageId: string) => {
-    const reason = prompt('Motivo da rejeição:');
+    const reason = prompt('Rejection reason:');
     if (reason) {
       try {
         await rejectOutage(outageId, reason);
@@ -105,7 +105,7 @@ export default function OutageRequestsPage() {
           loadPendingApproval();
         }
       } catch (error) {
-        console.error('Erro ao rejeitar outage:', error);
+        console.error('Error rejecting outage:', error);
       }
     }
   };
@@ -163,7 +163,7 @@ export default function OutageRequestsPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-600 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Erro ao carregar outages</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Error loading outages</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button 
             onClick={() => {
@@ -172,7 +172,7 @@ export default function OutageRequestsPage() {
             }}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
-            Tentar novamente
+            Try Again
           </button>
         </div>
       </div>
@@ -187,10 +187,10 @@ export default function OutageRequestsPage() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                Solicitações de Outage
+                Outage Requests
               </h1>
               <p className="text-gray-600 mt-2">
-                Gerencie e acompanhe todas as solicitações de outage
+                Manage and track all outage requests
               </p>
             </div>
             
@@ -200,7 +200,7 @@ export default function OutageRequestsPage() {
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
               >
                 <Plus className="h-5 w-5 mr-2" />
-                Nova Outage
+                New Outage
               </button>
             )}
           </div>
@@ -218,7 +218,7 @@ export default function OutageRequestsPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Todas as Outages
+                All Outages
               </button>
               
               <button
@@ -229,7 +229,7 @@ export default function OutageRequestsPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Pendentes de Aprovação
+                Pending Approval
               </button>
               
               <button
@@ -240,25 +240,25 @@ export default function OutageRequestsPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Minhas Outages
+                My Outages
               </button>
             </nav>
           </div>
         </div>
 
-        {/* Filtros */}
+        {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium text-gray-900 flex items-center">
               <Filter className="h-5 w-5 mr-2" />
-              Filtros
+              Filters
             </h3>
             
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="text-blue-600 hover:text-blue-700 text-sm font-medium"
             >
-              {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
+              {showFilters ? 'Hide' : 'Show'} Filters
             </button>
           </div>
 
@@ -273,34 +273,34 @@ export default function OutageRequestsPage() {
                   onChange={(e) => handleFilterChange('status', e.target.value)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">Todos os Status</option>
-                  <option value="pending">Pendente</option>
-                  <option value="approved">Aprovada</option>
-                  <option value="rejected">Rejeitada</option>
-                  <option value="cancelled">Cancelada</option>
+                  <option value="">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Criticalidade
+                  Criticality
                 </label>
                 <select
                   value={filters.criticality}
                   onChange={(e) => handleFilterChange('criticality', e.target.value)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">Todas as Criticalidades</option>
-                  <option value="LOW">Baixa</option>
-                  <option value="MEDIUM">Média</option>
-                  <option value="HIGH">Alta</option>
-                  <option value="CRITICAL">Crítica</option>
+                  <option value="">All Criticalities</option>
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
+                  <option value="CRITICAL">Critical</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Buscar
+                  Search
                 </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -308,7 +308,7 @@ export default function OutageRequestsPage() {
                     type="text"
                     value={filters.search}
                     onChange={(e) => handleFilterChange('search', e.target.value)}
-                    placeholder="Buscar por motivo..."
+                    placeholder="Search by reason..."
                     className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -319,7 +319,7 @@ export default function OutageRequestsPage() {
                   onClick={clearFilters}
                   className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  Limpar Filtros
+                  Clear Filters
                 </button>
               </div>
             </div>
@@ -385,7 +385,7 @@ export default function OutageRequestsPage() {
                         className="px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        Ver Detalhes
+                        View Details
                       </button>
                       
                       {/* Botões de aprovação apenas para Key Users e Admins na aba pending */}
@@ -396,7 +396,7 @@ export default function OutageRequestsPage() {
                             className="px-3 py-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center"
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
-                            Aprovar
+                            Approve
                           </button>
                           
                           <button
@@ -404,7 +404,7 @@ export default function OutageRequestsPage() {
                             className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center"
                           >
                             <XCircle className="h-4 w-4 mr-1" />
-                            Rejeitar
+                            Reject
                           </button>
                         </>
                       )}
@@ -417,12 +417,12 @@ export default function OutageRequestsPage() {
             <div className="text-center py-12">
               <div className="text-gray-400 text-6xl mb-4">📋</div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Nenhuma outage encontrada
+                No outages found
               </h3>
               <p className="text-gray-600 mb-6">
-                {activeTab === 'all' && 'Não há outages registradas no sistema.'}
-                {activeTab === 'pending' && 'Não há outages pendentes de aprovação.'}
-                {activeTab === 'my' && 'Você não possui outages registradas.'}
+                {activeTab === 'all' && 'There are no outages registered in the system.'}
+                {activeTab === 'pending' && 'There are no outages pending approval.'}
+                {activeTab === 'my' && 'You have no registered outages.'}
               </p>
               
               {activeTab === 'all' && user?.role !== 'admin' && (
@@ -431,7 +431,7 @@ export default function OutageRequestsPage() {
                   className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center mx-auto"
                 >
                   <Plus className="h-5 w-5 mr-2" />
-                  Criar Primeira Outage
+                  Create First Outage
                 </button>
               )}
             </div>
@@ -443,17 +443,17 @@ export default function OutageRequestsPage() {
           <div className="mt-6 bg-white rounded-lg shadow-sm p-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-700">
-                Mostrando <span className="font-medium">{outages.length}</span> de{' '}
-                <span className="font-medium">{outages.length}</span> resultados
+                Showing <span className="font-medium">{outages.length}</span> of{' '}
+                <span className="font-medium">{outages.length}</span> results
               </p>
               
               <div className="flex items-center space-x-2">
                 <button className="px-3 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                  Anterior
+                  Previous
                 </button>
                 <span className="px-3 py-2 text-gray-700">1</span>
                 <button className="px-3 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                  Próximo
+                  Next
                 </button>
               </div>
             </div>

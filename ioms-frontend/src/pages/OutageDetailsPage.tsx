@@ -34,7 +34,7 @@ export default function OutageDetailsPage() {
 
   const [outage, setOutage] = useState<any>(null);
 
-  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'workflow'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
   const [isLoadingOutage, setIsLoadingOutage] = useState(false);
 
 
@@ -75,7 +75,7 @@ export default function OutageDetailsPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm('Tem certeza que deseja excluir esta outage? Esta ação não pode ser desfeita.')) {
+    if (!confirm('Are you sure you want to delete this outage? This action cannot be undone.')) {
       return;
     }
 
@@ -88,19 +88,19 @@ export default function OutageDetailsPage() {
   };
 
   const handleCancel = async () => {
-    if (!confirm('Tem certeza que deseja cancelar esta outage? Esta ação não pode ser desfeita.')) {
+    if (!confirm('Are you sure you want to cancel this outage? This action cannot be undone.')) {
       return;
     }
 
-    const reason = prompt('Por favor, informe o motivo do cancelamento (opcional):');
+    const reason = prompt('Please inform the cancellation reason (optional):');
     
     try {
       const cancelled = await cancelOutage(id!, reason || undefined);
       setOutage(cancelled);
-      alert('Outage cancelada com sucesso!');
+      alert('Outage cancelled successfully!');
     } catch (err) {
       console.error('Error cancelling outage:', err);
-      alert('Erro ao cancelar outage. Tente novamente.');
+      alert('Error cancelling outage. Please try again.');
     }
   };
 
@@ -147,10 +147,10 @@ export default function OutageDetailsPage() {
   const canEdit = () => {
     if (!outage || !user) return false;
     
-    // Usuário pode editar se:
-    // 1. É o criador da outage
-    // 2. É admin ou key user
-    // 3. A outage ainda está pendente
+    // User can edit if:
+    // 1. Is the creator of the outage
+    // 2. Is admin or key user
+    // 3. The outage is still pending
     return (
       outage.createdBy === user.id ||
       ['ADMIN', 'KEY_USER'].includes(user.role) ||
@@ -169,7 +169,7 @@ export default function OutageDetailsPage() {
     if (!outage || !user) return false;
     
     // Apenas admin pode cancelar
-    // E a outage não pode já estar cancelada ou concluída
+    // And the outage cannot already be cancelled or completed
     return (
       user.role?.toUpperCase() === 'ADMIN' &&
       !['CANCELLED', 'COMPLETED'].includes(outage.status?.toUpperCase())
@@ -210,8 +210,8 @@ export default function OutageDetailsPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-gray-400 text-6xl mb-4">📋</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Outage não encontrada</h2>
-          <p className="text-gray-600">A outage solicitada não existe ou foi removida</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Outage not found</h2>
+          <p className="text-gray-600">The requested outage does not exist or has been removed</p>
         </div>
       </div>
     );
@@ -227,13 +227,13 @@ export default function OutageDetailsPage() {
             className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
-            Voltar
+            Back
           </button>
           
           <div className="flex justify-between items-start">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Detalhes da Outage
+                Outage Details
               </h1>
               <p className="text-gray-600">
                 {outage.reason}
@@ -247,7 +247,7 @@ export default function OutageDetailsPage() {
                   className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
                 >
                   <Edit className="h-4 w-4 mr-2" />
-                  Editar
+                  Edit
                 </button>
               )}
 
@@ -257,7 +257,7 @@ export default function OutageDetailsPage() {
                   className="px-4 py-2 border border-orange-300 text-orange-700 rounded-md hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-500 flex items-center"
                 >
                   <Cancel className="h-4 w-4 mr-2" />
-                  Cancelar
+                  Cancel
                 </button>
               )}
               
@@ -267,14 +267,14 @@ export default function OutageDetailsPage() {
                   className="px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center"
                 >
                   <Trash className="h-4 w-4 mr-2" />
-                  Excluir
+                  Delete
                 </button>
               )}
             </div>
           </div>
         </div>
 
-        {/* Status e Criticalidade */}
+        {/* Status and Criticality */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
@@ -287,7 +287,7 @@ export default function OutageDetailsPage() {
             </div>
             
             <div className="text-right">
-              <p className="text-sm text-gray-500">Criada em</p>
+              <p className="text-sm text-gray-500">Created on</p>
               <p className="text-gray-900 font-medium">{formatDate(outage.createdAt)}</p>
             </div>
           </div>
@@ -305,7 +305,7 @@ export default function OutageDetailsPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Detalhes
+                Details
               </button>
               
               <button
@@ -316,39 +316,28 @@ export default function OutageDetailsPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Histórico
-              </button>
-              
-              <button
-                onClick={() => setActiveTab('workflow')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'workflow'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Workflow
+                History
               </button>
             </nav>
           </div>
         </div>
 
-        {/* Conteúdo das Tabs */}
+        {/* Tab Content */}
         <div className="bg-white rounded-lg shadow-sm">
           {activeTab === 'details' && (
             <div className="p-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Informações Principais */}
+                {/* Main Information */}
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Informações da Outage
+                      Outage Information
                     </h3>
                     
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-500 mb-1">
-                          Motivo
+                          Reason
                         </label>
                         <p className="text-gray-900 font-medium">{outage.reason}</p>
                       </div>
@@ -356,7 +345,7 @@ export default function OutageDetailsPage() {
                       {outage.description && (
                         <div>
                           <label className="block text-sm font-medium text-gray-500 mb-1">
-                            Descrição
+                            Description
                           </label>
                           <p className="text-gray-900">{outage.description}</p>
                         </div>
@@ -364,7 +353,7 @@ export default function OutageDetailsPage() {
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-500 mb-1">
-                          Aplicação
+                          Application
                         </label>
                         <p className="text-gray-900">
                           {outage.application ? outage.application.name : 'N/A'}
@@ -373,30 +362,30 @@ export default function OutageDetailsPage() {
                     </div>
                   </div>
 
-                  {/* Datas e Horários */}
+                  {/* Dates and Times */}
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                       <Calendar className="h-5 w-5 mr-2 text-blue-600" />
-                      Datas e Horários
+                      Dates and Times
                     </h3>
                     
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Início:</span>
+                        <span className="text-sm text-gray-600">Start:</span>
                         <span className="font-medium text-gray-900">
                           {formatDate(outage.scheduledStart)}
                         </span>
                       </div>
                       
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Fim:</span>
+                        <span className="text-sm text-gray-600">End:</span>
                         <span className="font-medium text-gray-900">
                           {formatDate(outage.scheduledEnd)}
                         </span>
                       </div>
                       
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Duração Estimada:</span>
+                        <span className="text-sm text-gray-600">Estimated Duration:</span>
                         <span className="font-medium text-gray-900">
                           {formatDuration(outage.estimatedDuration)}
                         </span>
@@ -405,18 +394,18 @@ export default function OutageDetailsPage() {
                   </div>
                 </div>
 
-                {/* Informações Adicionais */}
+                {/* Additional Information */}
                 <div className="space-y-6">
-                  {/* Usuário */}
+                  {/* User */}
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                       <User className="h-5 w-5 mr-2 text-green-600" />
-                      Usuário
+                      User
                     </h3>
                     
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Criado por:</span>
+                        <span className="text-sm text-gray-600">Created by:</span>
                         <span className="font-medium text-gray-900">
                           {outage.createdByUser ? 
                             `${outage.createdByUser.firstName} ${outage.createdByUser.lastName}` : 
@@ -434,11 +423,11 @@ export default function OutageDetailsPage() {
                     </div>
                   </div>
 
-                  {/* Ações de Aprovação */}
+                  {/* Approval Actions */}
                   {(outage.status === 'pending' || outage.status === 'PENDING') && (
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        Ações de Aprovação
+                        Approval Actions
                       </h3>
                       <p className="text-xs text-gray-500 mb-2">Debug: Status = "{outage.status}"</p>
                       <ApprovalActions outageId={outage.id} outage={outage} />
@@ -452,20 +441,6 @@ export default function OutageDetailsPage() {
           {activeTab === 'history' && (
             <div className="p-6">
               <OutageHistoryPanel outageId={outage.id} />
-            </div>
-          )}
-
-          {activeTab === 'workflow' && (
-            <div className="p-6">
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-6xl mb-4">⚙️</div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Workflow de Aprovação
-                </h3>
-                <p className="text-gray-600">
-                  Sistema de workflow será implementado aqui
-                </p>
-              </div>
             </div>
           )}
         </div>
